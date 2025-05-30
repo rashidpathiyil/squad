@@ -1,0 +1,75 @@
+{
+  "basic_contact": {
+    "contactInfo": {
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "company": "Example Corp"
+    }
+  },
+  "minimal_contact": {
+    "contactInfo": {
+      "email": "jane.smith@techstartup.com"
+    }
+  },
+  "company_title_combination": {
+    "contactInfo": {
+      "company": "Tesla",
+      "title": "Chief Technology Officer"
+    }
+  },
+  "detailed_contact": {
+    "contactInfo": {
+      "name": "Sarah Johnson",
+      "email": "sarah.johnson@openai.com",
+      "company": "OpenAI",
+      "title": "Senior Software Engineer",
+      "location": "San Francisco, CA"
+    },
+    "optimizationMode": "balanced",
+    "systemInstructions": "Focus on technical skills and professional achievements"
+  },
+  "with_custom_models": {
+    "contactInfo": {
+      "name": "Alex Chen",
+      "company": "Microsoft",
+      "title": "Product Manager"
+    },
+    "chatModel": {
+      "provider": "openai",
+      "name": "gpt-4"
+    },
+    "embeddingModel": {
+      "provider": "openai",
+      "name": "text-embedding-3-large"
+    },
+    "optimizationMode": "speed"
+  },
+  "with_custom_openai_key": {
+    "contactInfo": {
+      "name": "Emma Wilson",
+      "email": "emma@startup.io"
+    },
+    "chatModel": {
+      "provider": "custom_openai",
+      "name": "gpt-3.5-turbo",
+      "customOpenAIKey": "your-api-key-here",
+      "customOpenAIBaseURL": "https://api.openai.com/v1"
+    },
+    "systemInstructions": "Provide comprehensive professional background information"
+  },
+  "social_media_focus": {
+    "contactInfo": {
+      "name": "David Rodriguez",
+      "company": "Meta",
+      "title": "Data Scientist"
+    },
+    "systemInstructions": "Focus on finding social media profiles, GitHub, LinkedIn, and personal websites"
+  },
+  "skills_and_industry_focus": {
+    "contactInfo": {
+      "name": "Lisa Wang",
+      "email": "lisa.wang@biotech.com"
+    },
+    "systemInstructions": "Focus on technical skills, industry expertise, and educational background"
+  }
+} 

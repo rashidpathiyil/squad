@@ -1,0 +1,33 @@
+{
+  "name": "contact-enrichment-service",
+  "version": "1.0.0",
+  "description": "Standalone contact enrichment service built with Nitro",
+  "type": "module",
+  "scripts": {
+    "build": "nitro build",
+    "dev": "nitro dev",
+    "preview": "nitro preview",
+    "start": "node .output/server/index.mjs"
+  },
+  "dependencies": {
+    "nitropack": "^2.11.12",
+    "@langchain/core": "^0.1.60",
+    "@langchain/openai": "^0.0.32",
+    "@langchain/anthropic": "^0.1.0",
+    "@langchain/google-genai": "^0.0.20",
+    "@langchain/groq": "^0.0.10",
+    "@langchain/ollama": "^0.0.3",
+    "openai": "^4.26.0",
+    "h3": "^1.9.0",
+    "@iarna/toml": "^2.2.5",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 

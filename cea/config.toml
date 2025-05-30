@@ -1,0 +1,36 @@
+[GENERAL]
+SIMILARITY_MEASURE = "cosine"
+KEEP_ALIVE = "5m"
+
+[API_SECURITY]
+API_KEY = "your_secure_api_key_here"
+REQUIRE_AUTH = true
+
+[MODELS.OPENAI]
+API_KEY = "your_openai_api_key_here"
+
+[MODELS.GROQ]
+API_KEY = ""
+
+[MODELS.ANTHROPIC]
+API_KEY = ""
+
+[MODELS.GEMINI]
+API_KEY = ""
+
+[MODELS.CUSTOM_OPENAI]
+API_KEY = ""
+API_URL = ""
+MODEL_NAME = ""
+
+[MODELS.OLLAMA]
+API_URL = ""
+
+[MODELS.DEEPSEEK]
+API_KEY = ""
+
+[MODELS.LM_STUDIO]
+API_URL = ""
+
+[API_ENDPOINTS]
+SEARXNG = "http://searxng:8080"
