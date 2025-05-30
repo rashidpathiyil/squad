@@ -10,7 +10,7 @@ interface SearchHandler {
     query: string,
     history: any[],
     llm: BaseChatModel,
-    embeddings: Embeddings,
+    embeddings: Embeddings | undefined,
     optimizationMode: string,
     searchResults: any[],
     systemInstructions: string,
@@ -93,7 +93,7 @@ const contactEnrichmentHandler: SearchHandler = {
     query: string,
     history: any[],
     llm: BaseChatModel,
-    embeddings: Embeddings,
+    embeddings: Embeddings | undefined,
     optimizationMode: string,
     searchResults: any[],
     systemInstructions: string,
@@ -145,24 +145,95 @@ const contactEnrichmentHandler: SearchHandler = {
           enrichedResults.push(result);
         }
       }
-      
-      const enrichmentPrompt = `
-You are a professional contact enrichment AI. Given the following contact information and web search results, provide enriched data in JSON format.
 
-Original Contact Info:
+      // Enhanced semantic search and ranking when embeddings are available
+      let rankedResults = enrichedResults;
+      if (embeddings) {
+        try {
+          // Create semantic query based on contact info
+          const semanticQuery = [
+            contactInfo.name,
+            contactInfo.company,
+            contactInfo.title,
+            contactInfo.industry,
+            contactInfo.location
+          ].filter(Boolean).join(' ');
+
+          if (semanticQuery.trim()) {
+            // Get embeddings for the query
+            const queryEmbedding = await embeddings.embedQuery(semanticQuery);
+            
+            // Get embeddings for each search result content
+            const resultTexts = enrichedResults.map(result => 
+              `${result.title} ${result.content} ${result.fullContent || ''}`.substring(0, 2000)
+            );
+            
+            if (resultTexts.length > 0) {
+              const resultEmbeddings = await embeddings.embedDocuments(resultTexts);
+              
+              // Calculate similarity scores using cosine similarity
+              const similarities = resultEmbeddings.map(resultEmb => {
+                const dotProduct = queryEmbedding.reduce((sum, a, i) => sum + a * resultEmb[i], 0);
+                const normA = Math.sqrt(queryEmbedding.reduce((sum, a) => sum + a * a, 0));
+                const normB = Math.sqrt(resultEmb.reduce((sum, b) => sum + b * b, 0));
+                return dotProduct / (normA * normB);
+              });
+              
+              // Rank results by semantic similarity
+              const rankedIndices = similarities
+                .map((sim, idx) => ({ similarity: sim, index: idx }))
+                .sort((a, b) => b.similarity - a.similarity)
+                .slice(0, 8); // Keep top 8 most relevant results
+              
+              rankedResults = rankedIndices.map(({ index, similarity }) => ({
+                ...enrichedResults[index],
+                semanticScore: similarity
+              }));
+              
+              console.log('Semantic search enabled - results ranked by relevance');
+            }
+          }
+        } catch (embeddingError) {
+          console.warn('Semantic search failed, falling back to standard ranking:', embeddingError);
+          // Fall back to original results if semantic search fails
+        }
+      } else {
+        console.log('Semantic search disabled - embeddings not available');
+      }
+      
+      const enrichmentPrompt = `You are a professional contact enrichment AI. Your job is to enrich contact information with accurate, verified details based on web search results.
+
+### Matching & Priority Rules:
+- If **email or phone** is provided, treat it as the **primary identifier**.
+  - **First**, try to match search results based on **email or phone**.
+  - **Only if a match is found**, proceed to validate with **secondary identifiers** such as name, title, company, location, etc.
+  - If the secondary identifiers (like name or title) do not align, reduce the confidence or exclude those conflicting fields.
+- If **only name** is available, proceed with caution and clearly reflect uncertainty in the confidence scores.
+- If no solid match can be made based on **email or phone**, **do not include** enriched data, or include it with **very low confidence**.
+
+### Data Inclusion Rules:
+- Only include fields where you have **reasonable confidence** based on actual search results.
+- **Do not invent or guess** data. If a field is not found or not verifiable, exclude it.
+- Include the **source URL** for each enriched data point.
+- Confidence scores must range from **0 to 100** and reflect how sure you are that the information belongs to the same person.
+${embeddings ? '- Search results have been semantically ranked by relevance - prioritize higher-ranked results.' : ''}
+
+### Original Contact Info:
 ${JSON.stringify(contactInfo, null, 2)}
 
-Web Search Results:
-${enrichedResults.map((result, index) => `
+### Web Search Results${embeddings ? ' (Semantically Ranked)' : ''}:
+${rankedResults.map((result, index) => `
 ${index + 1}. Title: ${result.title}
    URL: ${result.url}
    Content: ${result.content}
    ${result.fullContent ? `Full Content: ${result.fullContent.substring(0, 1000)}...` : ''}
+   ${result.semanticScore ? `Relevance Score: ${(result.semanticScore * 100).toFixed(1)}%` : ''}
 `).join('\n')}
 
-System Instructions:
-${systemInstructions || 'Provide accurate and professional contact enrichment based on the search results.'}
+### System Instructions:
+${systemInstructions || 'Only return enriched data that confidently matches the provided input. Do not guess or fabricate information. If information is ambiguous or inconsistent, reflect that in the confidence scores and consider excluding the field entirely.'}
 
+### Output Format:
 Please return a JSON object with the following structure:
 {
   "enrichedContact": {
@@ -200,17 +271,22 @@ Please return a JSON object with the following structure:
     "phone": 20
   },
   "sources": {
-    "name": "Original input",
-    "company": "LinkedIn profile",
-    "title": "Company website",
-    "industry": "Crunchbase data",
+    "name": "Original input or verified source URL",
+    "company": "LinkedIn profile or company site URL",
+    "title": "Company website or job listing URL",
+    "industry": "Crunchbase or similar data source",
     "socialProfiles": "Web search results"
   }
 }
 
-Only include fields where you have reasonable confidence based on the search results. Confidence scores should be between 0-100.
-Base the enrichment on the actual search results provided. If search results don't contain relevant information, don't invent data.
-Include the source URLs where you found each piece of information.
+### Notes:
+- Only include fields where you have **reasonable confidence** based on the **actual search results**.
+- Confidence scores must range from **0 to 100**, reflecting your certainty about the accuracy of each field.
+- If search results do not contain relevant or verifiable information for a field, **do not include it**.
+- Never guess or fabricate information.
+- Include **source URLs** for each enriched field to provide traceability.
+- If there are multiple people with similar names or emails, use disambiguating signals such as location, job title, company, or profile URLs.
+- Always prioritize **accuracy over completeness**. It's better to return fewer fields with high confidence than many with low reliability.
 `;
 
       // Simulate API call delay
@@ -226,10 +302,11 @@ Include the source URLs where you found each piece of information.
           
           emitter.emit('data', JSON.stringify({
             type: 'sources',
-            data: enrichedResults.map(result => ({
+            data: rankedResults.map(result => ({
               title: result.title,
               url: result.url,
-              engine: result.engine
+              engine: result.engine,
+              semanticScore: result.semanticScore
             }))
           }));
           

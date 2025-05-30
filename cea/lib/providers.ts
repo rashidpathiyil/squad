@@ -6,13 +6,13 @@ import { ChatGroq } from '@langchain/groq';
 import { ChatOllama } from '@langchain/ollama';
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import {
-    getAnthropicApiKey,
-    getDeepSeekApiKey,
-    getGeminiApiKey,
-    getGroqApiKey,
-    getLMStudioApiUrl,
-    getOllamaApiUrl,
-    getOpenAIApiKey
+  getAnthropicApiKey,
+  getDeepSeekApiKey,
+  getGeminiApiKey,
+  getGroqApiKey,
+  getLMStudioApiUrl,
+  getOllamaApiUrl,
+  getOpenAIApiKey
 } from './config';
 
 interface ModelProvider {
@@ -95,9 +95,9 @@ export const getAvailableChatModelProviders = async (): Promise<ModelProviders> 
   const anthropicKey = getAnthropicApiKey();
   if (anthropicKey) {
     providers.anthropic = {
-      'claude-3-sonnet-20240229': {
+      'claude-sonnet-4-20250514': {
         model: new ChatAnthropic({
-          modelName: 'claude-3-sonnet-20240229',
+          modelName: 'claude-sonnet-4-20250514',
           temperature: 0.3,
           anthropicApiKey: anthropicKey,
         }),
