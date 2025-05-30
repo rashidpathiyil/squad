@@ -213,3 +213,39 @@ func (cc *ContactController) GetContactStats(c *gin.Context) {
 
 	c.JSON(http.StatusOK, stats)
 }
+
+// Enhanced bulk import with dynamic field support
+func (cc *ContactController) EnhancedBulkCreateContacts(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	var req models.EnhancedBulkCreateContactRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := cc.validator.Struct(req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := cc.contactService.EnhancedBulkCreateContacts(userID.(string), req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message":           "Enhanced bulk import completed",
+		"processedContacts": len(response.ProcessedContacts),
+		"skippedContacts":   response.SkippedContacts,
+		"totalErrors":       len(response.Errors),
+		"fieldSummary":      response.FieldSummary,
+		"contacts":          response.ProcessedContacts,
+		"errors":            response.Errors,
+	})
+}

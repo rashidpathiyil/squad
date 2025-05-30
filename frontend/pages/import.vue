@@ -186,14 +186,62 @@
           <CardTitle class="text-green-800">Import Completed!</CardTitle>
         </div>
         
-        <CardDescription class="text-green-700">
-          Successfully imported {{ importData?.validRows }} contacts. You can now view and enrich them.
-        </CardDescription>
+        <div class="space-y-2">
+          <CardDescription class="text-green-700">
+            <span v-if="lastImportResult?.processedContacts && lastImportResult.processedContacts > 0">
+              Successfully imported {{ lastImportResult.processedContacts }} contacts.
+            </span>
+            <span v-else-if="lastImportResult?.skippedContacts && lastImportResult.skippedContacts > 0">
+              Import completed but all {{ lastImportResult.skippedContacts }} contacts were skipped.
+            </span>
+            <span v-else>
+              Import process completed.
+            </span>
+          </CardDescription>
+
+          <!-- Field Summary Stats -->
+          <div v-if="lastImportResult?.fieldSummary" class="bg-white/60 rounded-lg p-3 mt-3">
+            <h4 class="font-medium text-green-800 mb-2">Field Processing Summary</h4>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <div class="flex justify-between">
+                <span>Total Fields:</span>
+                <span class="font-medium">{{ lastImportResult.fieldSummary.detectedFields?.length || 0 }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Standard Fields:</span>
+                <span class="font-medium text-green-600">{{ lastImportResult.fieldSummary.standardFields?.length || 0 }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Custom Fields:</span>
+                <span class="font-medium text-orange-600">{{ lastImportResult.fieldSummary.customFields?.length || 0 }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Total Processed:</span>
+                <span class="font-medium">{{ lastImportResult.fieldSummary.totalContacts || 0 }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Errors Summary -->
+          <div v-if="lastImportResult?.totalErrors && lastImportResult.totalErrors > 0" class="bg-orange-50 rounded-lg p-3 mt-3">
+            <h4 class="font-medium text-orange-800 mb-2">Issues Found</h4>
+            <div class="text-sm text-orange-700">
+              {{ lastImportResult.totalErrors }} contacts were skipped due to validation errors or duplicates.
+            </div>
+          </div>
+        </div>
 
         <div class="flex space-x-2">
           <Button @click="navigateTo('/contacts')">
             <Users class="mr-2 h-4 w-4" />
             View Contacts
+          </Button>
+          <Button 
+            v-if="lastImportResult?.fieldSummary" 
+            variant="outline" 
+            @click="showFieldSummary = true"
+          >
+            📋 View Field Details
           </Button>
           <Button variant="outline" @click="resetImport">
             Import More
@@ -246,6 +294,15 @@
         </SheetFooter>
       </SheetContent>
     </Sheet>
+
+    <!-- Field Summary Dialog -->
+    <FieldSummaryDialog
+      v-if="lastImportResult?.fieldSummary"
+      :is-open="showFieldSummary"
+      :field-summary="lastImportResult.fieldSummary"
+      @close="showFieldSummary = false"
+      @view-contacts="navigateTo('/contacts')"
+    />
   </div>
 </template>
 
@@ -260,6 +317,7 @@ import {
 } from 'lucide-vue-next'
 import { ref } from 'vue'
 import * as XLSX from 'xlsx'
+import FieldSummaryDialog from '~/components/FieldSummaryDialog.vue'
 import { Button } from '~/components/ui/button'
 import {
   Card,
@@ -277,14 +335,14 @@ import {
   SheetHeader,
   SheetTitle
 } from '~/components/ui/sheet'
-import type { ImportResult, OriginalContact } from '~/types/contact'
+import type { EnhancedImportResult, ImportResult } from '~/types/contact'
 
 // Apply authentication middleware
 definePageMeta({
   middleware: 'auth'
 })
 
-const { createBulkContacts } = useContacts()
+const { createEnhancedBulkContacts } = useContacts()
 
 const fileInput = ref<HTMLInputElement>()
 const isDragging = ref(false)
@@ -294,6 +352,8 @@ const importProgress = ref(0)
 const importCompleted = ref(false)
 const importError = ref('')
 const errorSheetOpen = ref(false)
+const showFieldSummary = ref(false)
+const lastImportResult = ref<EnhancedImportResult | null>(null)
 
 const onDragOver = (event: DragEvent) => {
   event.preventDefault()
@@ -334,7 +394,7 @@ const processFile = async (file: File) => {
     const worksheet = workbook.Sheets[sheetName]
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
 
-    const result = parseContactData(jsonData as any[][])
+    const result = parseContactData(jsonData as unknown[][])
     importData.value = result
     importError.value = ''
   } catch (error) {
@@ -343,8 +403,13 @@ const processFile = async (file: File) => {
   }
 }
 
-const parseContactData = (data: any[][]): ImportResult => {
-  const headers = data[0]?.map(h => h?.toString().toLowerCase()) || []
+const parseContactData = (data: unknown[][]): ImportResult => {
+  // Filter out undefined/null headers and convert to strings
+  const rawHeaders = data[0] || []
+  const headers: string[] = rawHeaders
+    .map(h => h?.toString().toLowerCase().trim())
+    .filter((h): h is string => Boolean(h && h.length > 0))
+  
   const rows = data.slice(1).filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''))
   
   // Check for maximum row limit
@@ -355,23 +420,41 @@ const parseContactData = (data: any[][]): ImportResult => {
       totalRows: rows.length,
       validRows: 0,
       errors: [`File contains ${rows.length} contacts. Maximum allowed is ${MAX_CONTACTS} contacts per import. Please split your file into smaller batches.`],
-      contacts: []
+      contacts: [],
+      detectedFields: headers,
+      fieldMappings: {}
     }
   }
   
-  const nameIndex = headers.findIndex(h => h?.includes('name'))
-  const emailIndex = headers.findIndex(h => h?.includes('email'))
-  const phoneIndex = headers.findIndex(h => h?.includes('phone'))
+  // Find required field indices
+  const nameIndex = headers.findIndex(h => 
+    h.includes('name') || h.includes('full name') || h.includes('fullname')
+  )
+  const emailIndex = headers.findIndex(h => 
+    h.includes('email') || h.includes('e-mail') || h.includes('email address')
+  )
   
-  const contacts: OriginalContact[] = []
+  const contactsData: Record<string, unknown>[] = []
   const errors: string[] = []
   
   if (nameIndex === -1) {
-    errors.push('Name column is required')
+    errors.push('Name column is required (columns like "name", "full name", "fullname" are accepted)')
   }
   
   if (emailIndex === -1) {
-    errors.push('Email column is required')
+    errors.push('Email column is required (columns like "email", "e-mail", "email address" are accepted)')
+  }
+  
+  if (nameIndex === -1 || emailIndex === -1) {
+    return {
+      success: false,
+      totalRows: rows.length,
+      validRows: 0,
+      errors,
+      contacts: [],
+      detectedFields: headers,
+      fieldMappings: {}
+    }
   }
   
   const emailSet = new Set<string>()
@@ -401,24 +484,36 @@ const parseContactData = (data: any[][]): ImportResult => {
     
     emailSet.add(email)
     
-    contacts.push({
-      name: row[nameIndex]?.toString().trim() || '',
-      email: email || '',
-      phone: row[phoneIndex]?.toString().trim() || undefined
+    // Extract all fields dynamically
+    const contactData: Record<string, unknown> = {}
+    headers.forEach((header, index) => {
+      if (header && row[index] !== null && row[index] !== undefined && row[index] !== '') {
+        contactData[header] = row[index]?.toString().trim()
+      }
     })
+    
+    contactsData.push(contactData)
+  })
+  
+  // Create field mappings for display
+  const fieldMappings: Record<string, string> = {}
+  headers.forEach(header => {
+    fieldMappings[header] = header // Keep original for now, will be normalized on backend
   })
   
   // Show a warning for large files
-  if (contacts.length > 5000) {
-    errors.push(`Warning: Large file detected (${contacts.length} contacts). Import may take several minutes to complete.`)
+  if (contactsData.length > 5000) {
+    errors.push(`Warning: Large file detected (${contactsData.length} contacts). Import may take several minutes to complete.`)
   }
   
   return {
     success: errors.filter(e => !e.startsWith('Warning:')).length === 0,
     totalRows: rows.length,
-    validRows: contacts.length,
+    validRows: contactsData.length,
     errors,
-    contacts
+    contacts: contactsData,
+    detectedFields: headers,
+    fieldMappings
   }
 }
 
@@ -442,34 +537,43 @@ const startImport = async () => {
       }
     }, 1000) // Update every second
     
-    // Make API call to import contacts
-    const response = await createBulkContacts(importData.value.contacts)
+    // Use enhanced bulk import API with dynamic fields
+    const response = await createEnhancedBulkContacts({
+      contacts: importData.value.contacts as Record<string, unknown>[],
+      fieldMapping: importData.value.fieldMappings
+    })
+    
+    // Store the response for UI display
+    lastImportResult.value = response
     
     // Complete progress
     clearInterval(progressInterval)
     importProgress.value = 100
     
-    // Update import data with actual results
-    if (response.totalErrors > 0) {
-      importData.value.errors.push(...response.errors)
-      importData.value.validRows = response.totalCreated
-    }
+    // Show success
+    importCompleted.value = true
+    importError.value = ''
     
     setTimeout(() => {
       importing.value = false
-      importCompleted.value = true
     }, 500)
     
-  } catch (error: any) {
+  } catch (error) {
     importing.value = false
     
-    // Better error handling for timeout and other issues
-    if (error.message?.includes('timeout') || error.message?.includes('deadline')) {
-      importError.value = 'Import operation timed out. This usually happens with very large files. Please try with smaller batches (under 1000 contacts) or contact support.'
-    } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-      importError.value = 'Network error occurred during import. Please check your connection and try again.'
+    // Better error handling for different error types
+    if (error instanceof Error) {
+      if (error.message?.includes('timeout') || error.message?.includes('deadline')) {
+        importError.value = 'Import operation timed out. This usually happens with very large files. Please try with smaller batches (under 1000 contacts) or contact support.'
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        importError.value = 'Network error occurred during import. Please check your connection and try again.'
+      } else if (error.message?.includes('bulk-enhanced')) {
+        importError.value = 'Enhanced import is not available. Please try again or contact support.'
+      } else {
+        importError.value = error.message || 'Failed to import contacts. Please try again.'
+      }
     } else {
-      importError.value = error.message || 'Failed to import contacts. Please try again.'
+      importError.value = 'An unexpected error occurred during import. Please try again.'
     }
     
     console.error('Import failed:', error)
@@ -483,6 +587,8 @@ const resetImport = () => {
   importCompleted.value = false
   importError.value = ''
   errorSheetOpen.value = false
+  showFieldSummary.value = false
+  lastImportResult.value = null
   if (fileInput.value) {
     fileInput.value.value = ''
   }

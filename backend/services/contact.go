@@ -445,3 +445,218 @@ func (s *ContactService) callEnrichmentAPI(originalContact models.OriginalContac
 
 	return &enrichmentResponse, nil
 }
+
+// Enhanced bulk import with dynamic field support
+func (s *ContactService) EnhancedBulkCreateContacts(userID string, req models.EnhancedBulkCreateContactRequest) (*models.EnhancedBulkImportResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.config.BulkOperationTimeout)
+	defer cancel()
+
+	userObjectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, errors.New("invalid user ID")
+	}
+
+	response := &models.EnhancedBulkImportResponse{
+		ProcessedContacts: []models.Contact{},
+		Errors:            []string{},
+		FieldSummary: models.FieldSummary{
+			DetectedFields:    []string{},
+			StandardFields:    []string{},
+			CustomFields:      []string{},
+			FieldMappings:     make(map[string]string),
+			TotalContacts:     len(req.Contacts),
+			ProcessedContacts: 0,
+		},
+		SkippedContacts: 0,
+	}
+
+	if len(req.Contacts) == 0 {
+		return response, nil
+	}
+
+	// Detect all unique fields from the import
+	allFields := make(map[string]bool)
+	for _, contactData := range req.Contacts {
+		for fieldName := range contactData {
+			if fieldName != "" {
+				allFields[fieldName] = true
+			}
+		}
+	}
+
+	// Convert to slice
+	for fieldName := range allFields {
+		response.FieldSummary.DetectedFields = append(response.FieldSummary.DetectedFields, fieldName)
+	}
+
+	// Process field mappings
+	fieldMappings := make(map[string]string)
+	if req.FieldMapping != nil {
+		fieldMappings = req.FieldMapping
+	}
+
+	// Auto-detect standard fields if not manually mapped
+	for _, fieldName := range response.FieldSummary.DetectedFields {
+		if _, exists := fieldMappings[fieldName]; !exists {
+			normalizedField := models.NormalizeFieldName(fieldName)
+			fieldMappings[fieldName] = normalizedField
+		}
+	}
+
+	response.FieldSummary.FieldMappings = fieldMappings
+
+	// Categorize fields
+	standardFieldNames := []string{"name", "email", "phone", "company", "title", "industry", "location", "department"}
+	standardFieldSet := make(map[string]bool)
+	for _, field := range standardFieldNames {
+		standardFieldSet[field] = true
+	}
+
+	for originalField, mappedField := range fieldMappings {
+		if standardFieldSet[mappedField] {
+			response.FieldSummary.StandardFields = append(response.FieldSummary.StandardFields, originalField)
+		} else {
+			response.FieldSummary.CustomFields = append(response.FieldSummary.CustomFields, originalField)
+		}
+	}
+
+	// Convert map data to OriginalContact structs
+	var contacts []models.Contact
+	var documentsToInsert []interface{}
+	emails := make([]string, 0, len(req.Contacts))
+	emailToIndex := make(map[string]int)
+	processedIndex := 0
+
+	for i, contactData := range req.Contacts {
+		originalContact := &models.OriginalContact{}
+
+		// Apply field mappings
+		for originalFieldName, value := range contactData {
+			if mappedFieldName, exists := fieldMappings[originalFieldName]; exists {
+				originalContact.SetFieldValue(mappedFieldName, value)
+			}
+		}
+
+		// Validate required fields
+		if originalContact.Name == "" || originalContact.Email == "" {
+			response.Errors = append(response.Errors, fmt.Sprintf("Row %d: Missing required fields (name and email)", i+1))
+			response.SkippedContacts++
+			continue
+		}
+
+		// Validate email format
+		if !isValidEmail(originalContact.Email) {
+			response.Errors = append(response.Errors, fmt.Sprintf("Row %d: Invalid email format: %s", i+1, originalContact.Email))
+			response.SkippedContacts++
+			continue
+		}
+
+		emails = append(emails, originalContact.Email)
+		emailToIndex[originalContact.Email] = processedIndex
+		processedIndex++
+
+		contact := models.Contact{
+			ID:              primitive.NewObjectID(),
+			UserID:          userObjectID,
+			Status:          models.StatusImported,
+			OriginalContact: *originalContact,
+			CreatedAt:       time.Now(),
+			UpdatedAt:       time.Now(),
+		}
+
+		contacts = append(contacts, contact)
+		documentsToInsert = append(documentsToInsert, contact)
+	}
+
+	// Batch check for existing contacts
+	if len(emails) > 0 {
+		filter := bson.M{
+			"userId":                userObjectID,
+			"originalContact.email": bson.M{"$in": emails},
+		}
+
+		cursor, err := s.contactCollection.Find(ctx, filter)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check for duplicates: %v", err)
+		}
+		defer cursor.Close(ctx)
+
+		existingEmails := make(map[string]bool)
+		for cursor.Next(ctx) {
+			var existingContact models.Contact
+			if err := cursor.Decode(&existingContact); err != nil {
+				continue
+			}
+			existingEmails[existingContact.OriginalContact.Email] = true
+		}
+
+		// Remove duplicates
+		filteredContacts := []models.Contact{}
+		filteredDocuments := []interface{}{}
+		seenEmails := make(map[string]int)
+
+		for _, contact := range contacts {
+			email := contact.OriginalContact.Email
+
+			// Check database duplicates
+			if existingEmails[email] {
+				if index, exists := emailToIndex[email]; exists {
+					response.Errors = append(response.Errors, fmt.Sprintf("Row %d: Contact with email %s already exists in database", index+1, email))
+				}
+				response.SkippedContacts++
+				continue
+			}
+
+			// Check batch duplicates
+			if firstIndex, exists := seenEmails[email]; exists {
+				if index, exists := emailToIndex[email]; exists {
+					response.Errors = append(response.Errors, fmt.Sprintf("Row %d: Duplicate email %s (first occurrence at row %d)", index+1, email, firstIndex+1))
+				}
+				response.SkippedContacts++
+				continue
+			}
+
+			if index, exists := emailToIndex[email]; exists {
+				seenEmails[email] = index + 1
+			}
+
+			filteredContacts = append(filteredContacts, contact)
+			filteredDocuments = append(filteredDocuments, contact)
+		}
+
+		contacts = filteredContacts
+		documentsToInsert = filteredDocuments
+	}
+
+	// Insert in batches
+	if len(documentsToInsert) > 0 {
+		const batchSize = 1000
+
+		for i := 0; i < len(documentsToInsert); i += batchSize {
+			end := i + batchSize
+			if end > len(documentsToInsert) {
+				end = len(documentsToInsert)
+			}
+
+			batch := documentsToInsert[i:end]
+			opts := options.InsertMany().SetOrdered(false)
+			_, err = s.contactCollection.InsertMany(ctx, batch, opts)
+			if err != nil {
+				return response, fmt.Errorf("batch insert failed: %v", err)
+			}
+		}
+	}
+
+	response.ProcessedContacts = contacts
+	response.FieldSummary.ProcessedContacts = len(contacts)
+
+	return response, nil
+}
+
+// Helper function to validate email
+func isValidEmail(email string) bool {
+	if email == "" {
+		return false
+	}
+	return true // Simplified for now - add proper email validation if needed
+}

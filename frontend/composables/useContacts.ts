@@ -1,4 +1,4 @@
-import type { Contact, OriginalContact } from '~/types/contact'
+import type { Contact, EnhancedBulkCreateRequest, EnhancedImportResult, OriginalContact } from '~/types/contact'
 
 interface ContactsResponse {
   contacts: Contact[]
@@ -12,24 +12,11 @@ interface ContactResponse {
   contact: Contact
 }
 
-interface CreateContactRequest {
-  originalContact: OriginalContact
-}
-
-interface CreateContactResponse {
-  message: string
-  contact: Contact
-}
-
-interface BulkCreateRequest {
-  contacts: OriginalContact[]
-}
-
 interface BulkCreateResponse {
   message: string
   totalCreated: number
   contacts: Contact[]
-  errors: any[]
+  errors: string[]
   totalErrors: number
 }
 
@@ -39,10 +26,6 @@ interface ContactStats {
   processingContacts: number
   failedContacts: number
   averageConfidence: number
-}
-
-interface EnrichBulkRequest {
-  contactIds: string[]
 }
 
 interface EnrichBulkResponse {
@@ -80,7 +63,7 @@ export const useContacts = () => {
 
   // Create a new contact
   const createContact = async (contactData: OriginalContact) => {
-    return await post<CreateContactResponse>('/contacts', {
+    return await post<ContactResponse>('/contacts', {
       originalContact: contactData
     })
   }
@@ -90,6 +73,11 @@ export const useContacts = () => {
     return await postBulk<BulkCreateResponse>('/contacts/bulk', {
       contacts
     })
+  }
+
+  // Enhanced bulk create with dynamic field support
+  const createEnhancedBulkContacts = async (request: EnhancedBulkCreateRequest) => {
+    return await postBulk<EnhancedImportResult>('/contacts/bulk-enhanced', request)
   }
 
   // Enrich a single contact
@@ -119,6 +107,7 @@ export const useContacts = () => {
     getContact,
     createContact,
     createBulkContacts,
+    createEnhancedBulkContacts,
     enrichContact,
     enrichBulkContacts,
     getContactStats,

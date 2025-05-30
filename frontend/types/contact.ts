@@ -2,6 +2,16 @@ export interface OriginalContact {
   name: string
   email: string
   phone?: string
+  
+  // Additional standard fields
+  company?: string
+  title?: string
+  industry?: string
+  location?: string
+  department?: string
+  
+  // Dynamic/custom fields
+  customFields?: Record<string, any>
 }
 
 export interface EnrichedContact {
@@ -47,15 +57,16 @@ export interface EnrichmentSummary {
 }
 
 export interface Contact {
-  id: string
+  _id: string
   originalContact: OriginalContact
   enrichedContact?: EnrichedContact
   confidenceScores?: ConfidenceScores
   sources?: Sources
   enrichmentSummary?: EnrichmentSummary
-  status: 'imported' | 'enriching' | 'enriched' | 'failed'
-  importedAt: Date
-  enrichedAt?: Date
+  status: 'imported' | 'processing' | 'enriched' | 'failed'
+  created_at: Date
+  updated_at: Date
+  enriched_at?: Date
 }
 
 export interface ImportResult {
@@ -63,7 +74,9 @@ export interface ImportResult {
   totalRows: number
   validRows: number
   errors: string[]
-  contacts: OriginalContact[]
+  contacts: OriginalContact[] | Record<string, unknown>[]
+  detectedFields?: string[]
+  fieldMappings?: Record<string, string>
 }
 
 export interface EnrichmentJob {
@@ -108,4 +121,29 @@ export interface DashboardStats {
     enriched: number
     exported: number
   }
+}
+
+// Enhanced import types
+export interface FieldSummary {
+  detectedFields: string[]
+  standardFields: string[]
+  customFields: string[]
+  fieldMappings: Record<string, string>
+  totalContacts: number
+  processedContacts: number
+}
+
+export interface EnhancedImportResult {
+  success: boolean
+  processedContacts: number
+  skippedContacts: number
+  totalErrors: number
+  fieldSummary: FieldSummary
+  contacts: Contact[]
+  errors: string[]
+}
+
+export interface EnhancedBulkCreateRequest {
+  contacts: Record<string, any>[]
+  fieldMapping?: Record<string, string>
 } 

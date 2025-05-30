@@ -51,6 +51,7 @@ func SetupRoutes(
 		{
 			contacts.POST("", contactController.CreateContact)
 			contacts.POST("/bulk", contactController.BulkCreateContacts)
+			contacts.POST("/bulk-enhanced", contactController.EnhancedBulkCreateContacts)
 			contacts.GET("", contactController.GetContacts)
 			contacts.GET("/stats", contactController.GetContactStats)
 			contacts.GET("/:id", contactController.GetContactByID)

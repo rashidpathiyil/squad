@@ -144,6 +144,18 @@
                   <div v-if="contact.originalContact.phone" class="text-xs text-muted-foreground">
                     {{ contact.originalContact.phone }}
                   </div>
+                  <div v-if="contact.originalContact.company" class="text-xs text-blue-600">
+                    🏢 {{ contact.originalContact.company }}
+                  </div>
+                  <div v-if="contact.originalContact.title" class="text-xs text-purple-600">
+                    💼 {{ contact.originalContact.title }}
+                  </div>
+                  <div v-if="contact.originalContact.location" class="text-xs text-green-600">
+                    📍 {{ contact.originalContact.location }}
+                  </div>
+                  <div v-if="contact.originalContact.customFields && Object.keys(contact.originalContact.customFields).length > 0" class="text-xs text-orange-600">
+                    📋 {{ Object.keys(contact.originalContact.customFields).length }} custom field(s)
+                  </div>
                 </div>
               </td>
               
@@ -273,6 +285,7 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardHeader } from '~/components/ui/card'
 import { getConfidenceLevel } from '~/lib/utils'
+import type { Contact } from '~/types/contact'
 
 
 // Apply authentication middleware
@@ -327,7 +340,7 @@ const debouncedSearch = () => {
 // Computed properties
 const isAllSelected = computed(() => {
   return data.value?.contacts?.length > 0 && 
-    data.value.contacts.every((contact: any) => selectedContacts.value.has(contact._id))
+    data.value.contacts.every((contact: Contact) => selectedContacts.value.has(contact._id))
 })
 
 const visiblePages = computed(() => {
@@ -360,11 +373,11 @@ const toggleContactSelection = (contactId: string) => {
 
 const toggleAllSelection = () => {
   if (isAllSelected.value) {
-    data.value?.contacts?.forEach((contact: any) => {
+    data.value?.contacts?.forEach((contact: Contact) => {
       selectedContacts.value.delete(contact._id)
     })
   } else {
-    data.value?.contacts?.forEach((contact: any) => {
+    data.value?.contacts?.forEach((contact: Contact) => {
       selectedContacts.value.add(contact._id)
     })
   }
@@ -399,7 +412,7 @@ const enrichSelected = async () => {
     await enrichBulkContacts(Array.from(selectedContacts.value))
     selectedContacts.value.clear()
     await refresh()
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Bulk enrichment failed:', error)
   } finally {
     enriching.value = false
@@ -411,7 +424,7 @@ const enrichSingleContact = async (contactId: string) => {
   try {
     await enrichContact(contactId)
     await refresh()
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Contact enrichment failed:', error)
   } finally {
     enrichingSingle.value.delete(contactId)
@@ -428,7 +441,7 @@ const closeSlideOver = () => {
   selectedContactId.value = null
 }
 
-const handleContactEnriched = async (contactId: string) => {
+const handleContactEnriched = async (_contactId: string) => {
   // Refresh the contacts list to show updated data
   await refresh()
 }
