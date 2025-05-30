@@ -120,17 +120,47 @@ export default defineEventHandler(async (event) => {
       getAvailableEmbeddingModelProviders(),
     ]);
 
+    // Check if we have any providers available
+    if (!chatModelProviders || Object.keys(chatModelProviders).length === 0) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'No chat model providers available. Please configure at least one API key (OPENAI_API_KEY, GROQ_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, or DEEPSEEK_API_KEY)'
+      });
+    }
+
+    if (!embeddingModelProviders || Object.keys(embeddingModelProviders).length === 0) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'No embedding model providers available. Please configure at least one API key (OPENAI_API_KEY or GEMINI_API_KEY)'
+      });
+    }
+
     const chatModelProvider =
       body.chatModel?.provider || Object.keys(chatModelProviders)[0];
     const chatModel =
       body.chatModel?.name ||
-      Object.keys(chatModelProviders[chatModelProvider])[0];
+      Object.keys(chatModelProviders[chatModelProvider] || {})[0];
 
     const embeddingModelProvider =
       body.embeddingModel?.provider || Object.keys(embeddingModelProviders)[0];
     const embeddingModel =
       body.embeddingModel?.name ||
-      Object.keys(embeddingModelProviders[embeddingModelProvider])[0];
+      Object.keys(embeddingModelProviders[embeddingModelProvider] || {})[0];
+
+    // Additional validation
+    if (!chatModelProviders[chatModelProvider] || !chatModel) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Invalid chat model provider: ${chatModelProvider} or model: ${chatModel}`
+      });
+    }
+
+    if (!embeddingModelProviders[embeddingModelProvider] || !embeddingModel) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Invalid embedding model provider: ${embeddingModelProvider} or model: ${embeddingModel}`
+      });
+    }
 
     let llm: BaseChatModel | undefined;
     let embeddings: Embeddings | undefined;
