@@ -7,7 +7,7 @@ API_KEY = "your_secure_api_key_here"
 REQUIRE_AUTH = true
 
 [MODELS.OPENAI]
-API_KEY = "your_openai_api_key_here"
+API_KEY = ""
 
 [MODELS.GROQ]
 API_KEY = ""
