@@ -78,8 +78,8 @@
     </Card>
 
     <!-- Contacts Table -->
-    <Card v-else>
-      <div class="p-4 border-b">
+    <Card v-else class="px-0">
+      <CardHeader class="border-b !pb-4" >
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-semibold">
             Contacts {{ data?.total ? `(${data.total})` : '' }}
@@ -91,7 +91,7 @@
             </Button>
           </div>
         </div>
-      </div>
+      </CardHeader>
 
       <div v-if="!data?.contacts?.length" class="p-8 text-center text-muted-foreground">
         <Users class="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -206,7 +206,7 @@
       </div>
 
       <!-- Pagination -->
-      <div v-if="data?.totalPages && data.totalPages > 1" class="border-t p-4">
+      <div v-if="data?.totalPages && data.totalPages > 1" class="border-t px-4 pt-6">
         <div class="flex items-center justify-between">
           <div class="text-sm text-muted-foreground">
             Showing {{ ((data.page - 1) * data.pageSize) + 1 }} to {{ Math.min(data.page * data.pageSize, data.total) }} of {{ data.total }} contacts
@@ -269,7 +269,11 @@ import {
   Zap
 } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
+import { Badge } from '~/components/ui/badge'
+import { Button } from '~/components/ui/button'
+import { Card, CardHeader } from '~/components/ui/card'
 import { getConfidenceLevel } from '~/lib/utils'
+
 
 // Apply authentication middleware
 definePageMeta({

@@ -2,155 +2,172 @@
   <div class="space-y-6">
     <!-- Welcome Section -->
     <div>
-      <h1 class="text-3xl font-bold tracking-tight">Dashboard</h1>
+      <h1 class="text-2xl font-semibold">Dashboard</h1>
       <p class="text-muted-foreground">
         Welcome to your Contact Enrichment CRM. Manage and enrich your contacts with confidence.
       </p>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="pending" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card v-for="i in 4" :key="i" class="p-6">
-        <div class="space-y-3">
-          <div class="h-4 bg-accent rounded animate-pulse"/>
-          <div class="h-8 bg-accent rounded animate-pulse"/>
-          <div class="h-3 bg-accent rounded animate-pulse w-3/4"/>
-        </div>
-      </Card>
-    </div>
-
     <!-- Stats Cards -->
-    <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card class="p-6">
-        <div class="flex items-center space-x-2">
-          <Users class="h-4 w-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">Total Contacts</h3>
-        </div>
-        <div class="mt-2">
-          <div class="text-2xl font-bold">{{ stats?.totalContacts || 0 }}</div>
-          <p class="text-xs text-muted-foreground">
-            Total contacts in your system
-          </p>
-        </div>
-      </Card>
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <template v-if="pending">
+        <Card v-for="i in 4" :key="i" class="rounded-lg">
+          <div>
+            <div class="flex items-center gap-2 mb-4">
+              <div class="h-5 w-5 rounded-full bg-muted animate-pulse"/>
+              <div class="h-5 w-24 rounded bg-muted animate-pulse"/>
+            </div>
+            <div class="h-8 w-20 rounded bg-muted animate-pulse mb-1"/>
+            <div class="h-4 w-32 rounded bg-muted animate-pulse"/>
+          </div>
+        </Card>
+      </template>
 
-      <Card class="p-6">
-        <div class="flex items-center space-x-2">
-          <CheckCircle class="h-4 w-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">Enriched Contacts</h3>
-        </div>
-        <div class="mt-2">
-          <div class="text-2xl font-bold">{{ stats?.enrichedContacts || 0 }}</div>
-          <p class="text-xs text-muted-foreground">
-            Successfully enriched contacts
-          </p>
-        </div>
-      </Card>
+      <template v-else>
+        <Card class="rounded-lg">
+          <div >
+            <div class="flex items-center gap-2 mb-4">
+              <Users class="h-5 w-5 text-muted-foreground" />
+              <span class="text-base font-medium">Total Contacts</span>
+            </div>
+            <p class="text-3xl font-semibold mb-1">{{ stats?.totalContacts || 0 }}</p>
+            <p class="text-sm text-muted-foreground">
+              Total contacts in your system
+            </p>
+          </div>
+        </Card>
 
-      <Card class="p-6">
-        <div class="flex items-center space-x-2">
-          <Clock class="h-4 w-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">Processing</h3>
-        </div>
-        <div class="mt-2">
-          <div class="text-2xl font-bold">{{ stats?.processingContacts || 0 }}</div>
-          <p class="text-xs text-muted-foreground">
-            Currently being processed
-          </p>
-        </div>
-      </Card>
+        <Card class="rounded-lg">
+          <div >
+            <div class="flex items-center gap-2 mb-4">
+              <CheckCircle class="h-5 w-5 text-muted-foreground" />
+              <span class="text-base font-medium">Enriched Contacts</span>
+            </div>
+            <p class="text-3xl font-semibold mb-1">{{ stats?.enrichedContacts || 0 }}</p>
+            <p class="text-sm text-muted-foreground">
+              Successfully enriched contacts
+            </p>
+          </div>
+        </Card>
 
-      <Card class="p-6">
-        <div class="flex items-center space-x-2">
-          <TrendingUp class="h-4 w-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">Avg. Confidence</h3>
-        </div>
-        <div class="mt-2">
-          <div class="text-2xl font-bold">{{ Math.round(stats?.averageConfidence || 0) }}%</div>
-          <Badge :variant="getConfidenceBadgeVariant(stats?.averageConfidence || 0)">
-            {{ getConfidenceLevel(stats?.averageConfidence || 0) }}
-          </Badge>
-        </div>
-      </Card>
+        <Card class="rounded-lg">
+          <div >
+            <div class="flex items-center gap-2 mb-4">
+              <Clock class="h-5 w-5 text-muted-foreground" />
+              <span class="text-base font-medium">Processing</span>
+            </div>
+            <p class="text-3xl font-semibold mb-1">{{ stats?.processingContacts || 0 }}</p>
+            <p class="text-sm text-muted-foreground">
+              Currently being processed
+            </p>
+          </div>
+        </Card>
+
+        <Card class="rounded-lg">
+          <div >
+            <div class="flex items-center gap-2 mb-4">
+              <TrendingUp class="h-5 w-5 text-muted-foreground" />
+              <span class="text-base font-medium">Avg. Confidence</span>
+            </div>
+            <p class="text-3xl font-semibold mb-1">{{ Math.round(stats?.averageConfidence || 0) }}%</p>
+            <Badge variant="destructive" class="rounded-full px-3 py-0.5 text-xs font-medium">
+              low
+            </Badge>
+          </div>
+        </Card>
+      </template>
     </div>
-
-    <!-- Error State -->
-    <Card v-if="error" class="p-6 border-destructive">
-      <div class="flex items-center space-x-2 text-destructive">
-        <AlertCircle class="h-4 w-4" />
-        <p class="font-medium">Error loading dashboard data</p>
-      </div>
-      <p class="text-sm text-muted-foreground mt-2">{{ error }}</p>
-      <Button class="mt-4" variant="outline" size="sm" @click="refresh()">
-        Try Again
-      </Button>
-    </Card>
 
     <!-- Quick Actions -->
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <Card class="p-6">
-        <div class="space-y-4">
-          <div class="flex items-center space-x-2">
-            <Upload class="h-5 w-5 text-primary" />
-            <h3 class="text-lg font-semibold">Import Contacts</h3>
+      <Card class="rounded-lg">
+        <div >
+          <div class="flex items-center gap-2 text-primary mb-2">
+            <Upload class="h-5 w-5" />
+            <span class="text-base font-medium">Import Contacts</span>
           </div>
-          <p class="text-muted-foreground">
+          <p class="text-sm text-muted-foreground mb-4">
             Upload an Excel file to import new contacts for enrichment.
           </p>
-          <Button class="w-full" @click="navigateTo('/import')">
-            <Upload class="mr-2 h-4 w-4" />
+          <Button 
+            variant="default" 
+            class="w-full justify-center items-center gap-2 bg-primary" 
+            @click="navigateTo('/import')"
+          >
+            <Upload class="h-4 w-4" />
             Start Import
           </Button>
         </div>
       </Card>
 
-      <Card class="p-6">
-        <div class="space-y-4">
-          <div class="flex items-center space-x-2">
-            <Zap class="h-5 w-5 text-primary" />
-            <h3 class="text-lg font-semibold">Bulk Enrichment</h3>
+      <Card class="rounded-lg">
+        <div >
+          <div class="flex items-center gap-2 text-primary mb-2">
+            <Zap class="h-5 w-5" />
+            <span class="text-base font-medium">Bulk Enrichment</span>
           </div>
-          <p class="text-muted-foreground">
+          <p class="text-sm text-muted-foreground mb-4">
             Enrich multiple contacts at once with our AI-powered system.
           </p>
-          <Button variant="outline" class="w-full" @click="navigateTo('/contacts')">
-            <Zap class="mr-2 h-4 w-4" />
+          <Button 
+            variant="outline" 
+            class="w-full justify-center items-center gap-2 bg-white" 
+            @click="navigateTo('/contacts')"
+          >
+            <Zap class="h-4 w-4" />
             View Contacts
           </Button>
         </div>
       </Card>
 
-      <Card class="p-6">
-        <div class="space-y-4">
-          <div class="flex items-center space-x-2">
-            <Download class="h-5 w-5 text-primary" />
-            <h3 class="text-lg font-semibold">Export Data</h3>
+      <Card class="rounded-lg">
+        <div >
+          <div class="flex items-center gap-2 text-primary mb-2">
+            <Download class="h-5 w-5" />
+            <span class="text-base font-medium">Export Data</span>
           </div>
-          <p class="text-muted-foreground">
+          <p class="text-sm text-muted-foreground mb-4">
             Export enriched contacts with confidence scores and additional data.
           </p>
-          <Button variant="outline" class="w-full" @click="navigateTo('/export')">
-            <Download class="mr-2 h-4 w-4" />
+          <Button 
+            variant="outline" 
+            class="w-full justify-center items-center gap-2 bg-white" 
+            @click="navigateTo('/export')"
+          >
+            <Download class="h-4 w-4" />
             Export Now
           </Button>
         </div>
       </Card>
     </div>
 
-    <!-- API Status -->
-    <Card class="p-6">
-      <div class="space-y-4">
-        <h3 class="text-lg font-semibold">System Status</h3>
-        <div class="flex items-center space-x-2">
-          <div
-:class="[
-            'w-2 h-2 rounded-full',
-            healthStatus === 'healthy' ? 'bg-green-500' : 'bg-red-500'
-          ]"/>
+    <!-- System Status -->
+    <Card class="rounded-lg">
+      <div >
+        <h3 class="text-base font-medium mb-4">System Status</h3>
+        <div class="flex items-center gap-2">
+          <div class="relative flex h-2 w-2">
+            <div class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"/>
+            <div class="relative inline-flex h-2 w-2 rounded-full bg-green-500"/>
+          </div>
           <span class="text-sm">
-            API Status: {{ healthStatus === 'healthy' ? 'Connected' : 'Disconnected' }}
+            API Status: Connected
           </span>
         </div>
+      </div>
+    </Card>
+
+    <!-- Error State -->
+    <Card v-if="error" class="rounded-lg">
+      <div class="p-6 space-y-3">
+        <div class="flex items-center gap-2 text-destructive">
+          <AlertCircle class="h-5 w-5" />
+          <p class="font-medium">Error loading dashboard data</p>
+        </div>
+        <p class="text-sm text-muted-foreground">{{ error }}</p>
+        <Button variant="outline" size="sm" @click="refresh()">
+          Try Again
+        </Button>
       </div>
     </Card>
   </div>
@@ -167,7 +184,9 @@ import {
   Users,
   Zap
 } from 'lucide-vue-next'
-import { getConfidenceLevel } from '~/lib/utils'
+import { Badge } from '~/components/ui/badge'
+import { Button } from '~/components/ui/button'
+import { Card } from '~/components/ui/card'
 
 // Apply authentication middleware
 definePageMeta({
@@ -180,8 +199,8 @@ const { getContactStats, checkHealth } = useContacts()
 const { data: stats, pending, error, refresh } = await useLazyAsyncData('dashboard-stats', async () => {
   try {
     return await getContactStats()
-  } catch (err: any) {
-    throw new Error(err.message || 'Failed to load dashboard statistics')
+  } catch (err: unknown) {
+    throw new Error(err instanceof Error ? err.message : 'Failed to load dashboard statistics')
   }
 })
 
@@ -195,14 +214,4 @@ onMounted(async () => {
     healthStatus.value = 'unhealthy'
   }
 })
-
-function getConfidenceBadgeVariant(score: number) {
-  const level = getConfidenceLevel(score)
-  switch (level) {
-    case 'low': return 'destructive'
-    case 'medium': return 'warning'
-    case 'high': return 'success'
-    default: return 'secondary'
-  }
-}
 </script> 

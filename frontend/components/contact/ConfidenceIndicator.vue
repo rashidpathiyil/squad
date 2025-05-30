@@ -12,7 +12,7 @@
           progressColorClass
         ]"
         :style="{ width: `${score}%` }"
-      ></div>
+      />
     </div>
     
     <div v-if="source" class="text-xs text-muted-foreground">
@@ -23,7 +23,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Badge } from '~/components/ui/badge'
 import { getConfidenceLevel } from '~/lib/utils'
+
 
 interface Props {
   score: number

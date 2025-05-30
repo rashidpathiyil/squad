@@ -8,14 +8,15 @@
     </div>
 
     <!-- Upload Section -->
-    <Card v-if="!importData" class="p-6">
-      <div class="space-y-4">
-        <h3 class="text-lg font-semibold">Upload Excel File</h3>
-        
+    <Card v-if="!importData" class="px-0">
+      <CardHeader>
+        <CardTitle>Upload Excel File</CardTitle>
+      </CardHeader>
+      <CardContent class="space-y-6">
         <!-- Drop Zone -->
         <div
           :class="[
-            'border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer',
+            'border border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer',
             isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
           ]"
           @drop="onDrop"
@@ -40,33 +41,32 @@
         >
 
         <!-- Sample Format -->
-        <div class="bg-muted/50 rounded-lg p-4">
+        <div class="bg-muted/30 rounded-lg p-4">
           <h4 class="font-medium mb-2">Expected Format:</h4>
-          <div class="text-sm space-y-1">
+          <div class="text-sm space-y-1 text-muted-foreground">
             <p><strong>Required columns:</strong> Name, Email</p>
             <p><strong>Optional columns:</strong> Phone, Company, Title</p>
             <p><strong>Recommended:</strong> Keep files under 5,000 contacts for optimal performance</p>
             <p><strong>Maximum:</strong> 10,000 contacts per import</p>
           </div>
         </div>
-      </div>
+      </CardContent>
     </Card>
 
     <!-- Preview Section -->
     <div v-if="importData && !importing" class="space-y-4">
-      <Card class="p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Import Preview</h3>
-          <Button variant="outline" @click="resetImport">
+      <Card>
+        <CardHeader class="flex flex-row items-center justify-between">
+          <CardTitle>Import Preview</CardTitle>
+          <Button variant="outline" size="sm" @click="resetImport">
             <RotateCcw class="mr-2 h-4 w-4" />
             Start Over
           </Button>
-        </div>
-
-        <div class="space-y-4">
+        </CardHeader>
+        <CardContent class="space-y-6">
           <!-- Import Summary -->
           <div class="grid grid-cols-3 gap-4">
-            <div class="text-center p-4 bg-muted/50 rounded-lg">
+            <div class="text-center p-4 bg-muted/30 rounded-lg">
               <div class="text-2xl font-bold">{{ importData.totalRows }}</div>
               <div class="text-sm text-muted-foreground">Total Rows</div>
             </div>
@@ -80,28 +80,18 @@
             </div>
           </div>
 
-          <!-- Errors -->
-          <div v-if="importData.errors.length > 0" class="space-y-2">
-            <h4 class="font-medium text-destructive">Import Errors:</h4>
-            <div class="bg-destructive/10 rounded-lg p-4 space-y-1">
-              <p v-for="error in importData.errors" :key="error" class="text-sm text-destructive">
-                • {{ error }}
-              </p>
-            </div>
-          </div>
-
           <!-- Preview Table -->
           <div class="border rounded-lg overflow-hidden">
-            <div class="bg-muted/50 px-4 py-2 border-b">
+            <div class="bg-muted/30 px-4 py-2 border-b">
               <h4 class="font-medium">Contact Preview (First 5 rows)</h4>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full">
-                <thead class="bg-muted/25">
+                <thead class="bg-muted/20">
                   <tr>
-                    <th class="px-4 py-2 text-left text-sm font-medium">Name</th>
-                    <th class="px-4 py-2 text-left text-sm font-medium">Email</th>
-                    <th class="px-4 py-2 text-left text-sm font-medium">Phone</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Name</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Email</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Phone</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -115,27 +105,58 @@
             </div>
           </div>
 
-          <!-- Import Button -->
-          <div class="flex justify-end">
-            <Button 
-              :disabled="importData.validRows === 0" 
-              size="lg"
-              @click="startImport"
-            >
-              <Users class="mr-2 h-4 w-4" />
-              Import {{ importData.validRows }} Contacts
-            </Button>
+          <!-- Errors -->
+          <div v-if="importData.errors.length > 0" class="space-y-2">
+            <div class="flex items-center justify-between">
+              <h4 class="font-medium text-destructive">Import Errors ({{ importData.errors.length }})</h4>
+              <Button 
+                v-if="importData.errors.length > 3" 
+                variant="outline" 
+                size="sm"
+                @click="errorSheetOpen = true"
+              >
+                <AlertCircle class="mr-2 h-4 w-4" />
+                View All Errors
+              </Button>
+            </div>
+            <div class="bg-destructive/5 rounded-lg p-4 border border-destructive/20">
+              <div class="space-y-2">
+                <div 
+                  v-for="(error, index) in importData.errors.slice(0, 3)" 
+                  :key="`error-${index}`" 
+                  class="flex items-start space-x-2 text-sm text-destructive"
+                >
+                  <span class="flex-shrink-0 mt-0.5">•</span>
+                  <span class="break-words">{{ error }}</span>
+                </div>
+                <div v-if="importData.errors.length > 3" class="pt-2 border-t border-destructive/20">
+                  <p class="text-xs text-destructive/70 text-center">
+                    And {{ importData.errors.length - 3 }} more errors...
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </CardContent>
+        <CardFooter v-if="!importCompleted" class="flex justify-end">
+          <Button 
+            :disabled="importData.validRows === 0 || importing" 
+            size="default"
+            @click="startImport"
+          >
+            <Users class="mr-2 h-4 w-4" />
+            Import {{ importData.validRows }} Contacts
+          </Button>
+        </CardFooter>
       </Card>
     </div>
 
     <!-- Import Progress -->
-    <Card v-if="importing" class="p-6">
-      <div class="space-y-4">
+    <Card v-if="importing">
+      <CardContent class="space-y-4">
         <div class="flex items-center space-x-2">
           <Loader2 class="h-5 w-5 animate-spin" />
-          <h3 class="text-lg font-semibold">Importing Contacts...</h3>
+          <CardTitle>Importing Contacts...</CardTitle>
         </div>
         
         <div class="space-y-2">
@@ -143,7 +164,7 @@
             <span>Progress</span>
             <span>{{ importProgress }}%</span>
           </div>
-          <div class="w-full bg-muted rounded-full h-2">
+          <div class="w-full bg-muted/30 rounded-full h-2">
             <div 
               class="bg-primary h-2 rounded-full transition-all duration-300"
               :style="{ width: `${importProgress}%` }"
@@ -151,23 +172,23 @@
           </div>
         </div>
 
-        <p class="text-sm text-muted-foreground">
+        <CardDescription>
           Please wait while we import your contacts. This may take a few moments.
-        </p>
-      </div>
+        </CardDescription>
+      </CardContent>
     </Card>
 
     <!-- Success Message -->
-    <Card v-if="importCompleted" class="p-6 border-green-200 bg-green-50">
-      <div class="space-y-4">
+    <Card v-if="importCompleted" class="bg-green-50">
+      <CardContent class="space-y-4">
         <div class="flex items-center space-x-2">
           <CheckCircle class="h-5 w-5 text-green-600" />
-          <h3 class="text-lg font-semibold text-green-800">Import Completed!</h3>
+          <CardTitle class="text-green-800">Import Completed!</CardTitle>
         </div>
         
-        <p class="text-green-700">
+        <CardDescription class="text-green-700">
           Successfully imported {{ importData?.validRows }} contacts. You can now view and enrich them.
-        </p>
+        </CardDescription>
 
         <div class="flex space-x-2">
           <Button @click="navigateTo('/contacts')">
@@ -178,26 +199,53 @@
             Import More
           </Button>
         </div>
-      </div>
+      </CardContent>
     </Card>
 
     <!-- Error Message -->
-    <Card v-if="importError" class="p-6 border-destructive bg-destructive/5">
-      <div class="space-y-4">
+    <Card v-if="importError" class="bg-destructive/5">
+      <CardContent class="space-y-4">
         <div class="flex items-center space-x-2">
           <AlertCircle class="h-5 w-5 text-destructive" />
-          <h3 class="text-lg font-semibold text-destructive">Import Failed</h3>
+          <CardTitle class="text-destructive">Import Failed</CardTitle>
         </div>
         
-        <p class="text-destructive">
+        <CardDescription class="text-destructive">
           {{ importError }}
-        </p>
+        </CardDescription>
 
         <Button variant="outline" @click="resetImport">
           Try Again
         </Button>
-      </div>
+      </CardContent>
     </Card>
+
+    <!-- Error Sheet -->
+    <Sheet v-model:open="errorSheetOpen">
+      <SheetContent class="w-[400px] sm:w-[540px]">
+        <SheetHeader>
+          <SheetTitle>Import Errors ({{ importData?.errors.length || 0 }})</SheetTitle>
+          <SheetDescription>
+            Review all errors found during the import process.
+          </SheetDescription>
+        </SheetHeader>
+        <div class="mt-6 space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
+          <div 
+            v-for="(error, index) in importData?.errors || []" 
+            :key="`sheet-error-${index}`" 
+            class="flex items-start space-x-3 p-3 bg-destructive/5 rounded-lg border border-destructive/20"
+          >
+            <AlertCircle class="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+            <span class="text-sm text-destructive break-words leading-relaxed">{{ error }}</span>
+          </div>
+        </div>
+        <SheetFooter class="mt-6">
+          <Button variant="outline" class="w-full" @click="errorSheetOpen = false">
+            Close
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   </div>
 </template>
 
@@ -212,6 +260,23 @@ import {
 } from 'lucide-vue-next'
 import { ref } from 'vue'
 import * as XLSX from 'xlsx'
+import { Button } from '~/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from '~/components/ui/card'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle
+} from '~/components/ui/sheet'
 import type { ImportResult, OriginalContact } from '~/types/contact'
 
 // Apply authentication middleware
@@ -228,6 +293,7 @@ const importing = ref(false)
 const importProgress = ref(0)
 const importCompleted = ref(false)
 const importError = ref('')
+const errorSheetOpen = ref(false)
 
 const onDragOver = (event: DragEvent) => {
   event.preventDefault()
@@ -416,6 +482,7 @@ const resetImport = () => {
   importProgress.value = 0
   importCompleted.value = false
   importError.value = ''
+  errorSheetOpen.value = false
   if (fileInput.value) {
     fileInput.value.value = ''
   }

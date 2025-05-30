@@ -193,10 +193,12 @@
 </template>
 
 <script setup lang="ts">
+import { AlertCircle, X, Zap } from 'lucide-vue-next'
 import { ref, watch } from 'vue'
+import { Badge } from '~/components/ui/badge'
+import { Button } from '~/components/ui/button'
+import { formatDate, getConfidenceLevel } from '~/lib/utils'
 import type { Contact } from '~/types/contact'
-import { getConfidenceLevel, formatDate } from '~/lib/utils'
-import { X, AlertCircle, Zap } from 'lucide-vue-next'
 
 interface Props {
   isOpen: boolean

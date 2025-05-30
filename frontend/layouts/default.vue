@@ -3,7 +3,7 @@
     <!-- Sidebar -->
     <div class="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r">
       <div class="flex h-16 items-center border-b px-6">
-        <h1 class="text-xl font-bold">Contact CRM</h1>
+        <NuxtLink to="/" class="text-xl font-bold">CEA</NuxtLink>
       </div>
       
       <nav class="flex-1 space-y-1 p-4">
@@ -86,7 +86,7 @@
                 </div>
               </template>
               <template #placeholder>
-                <div class="h-8 w-20 bg-accent rounded animate-pulse"></div>
+                <div class="h-8 w-20 bg-accent rounded animate-pulse"/>
               </template>
             </AuthState>
           </div>
@@ -102,17 +102,17 @@
 </template>
 
 <script setup lang="ts">
-import { 
-  Home, 
-  Upload, 
-  Users, 
-  Download, 
-  BarChart3, 
-  Sun, 
-  Moon,
+import {
   ChevronDown,
-  LogOut
+  Download,
+  Home,
+  LogOut,
+  Moon,
+  Sun,
+  Upload,
+  Users
 } from 'lucide-vue-next'
+import { Button } from '~/components/ui/button'
 
 const { $colorMode } = useNuxtApp()
 const route = useRoute()
@@ -125,12 +125,11 @@ const navigation = [
   { name: 'Import Contacts', href: '/import', icon: Upload },
   { name: 'All Contacts', href: '/contacts', icon: Users },
   { name: 'Export', href: '/export', icon: Download },
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
 ]
 
 const pageTitle = computed(() => {
   const currentRoute = navigation.find(item => item.href === route.path)
-  return currentRoute?.name || 'Contact CRM'
+  return currentRoute?.name || 'CEA'
 })
 
 const toggleColorMode = () => {

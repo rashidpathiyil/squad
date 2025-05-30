@@ -1,18 +1,21 @@
+import tailwindcss from '@tailwindcss/vite'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
   compatibilityDate: '2024-04-03',
   modules: [
-    '@nuxtjs/tailwindcss',
     '@nuxtjs/color-mode',
     '@vueuse/nuxt',
     '@nuxt/eslint',
-    'nuxt-auth-utils'
+    'nuxt-auth-utils',
+    'shadcn-nuxt',
+    'nuxt-icon',
   ],
   colorMode: {
     classSuffix: ''
   },
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/tailwind.css'],
   components: {
     dirs: [
       {
@@ -30,6 +33,11 @@ export default defineNuxtConfig({
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080/api/v1'
     }
+  },
+  vite: {
+    plugins: [
+      tailwindcss(),
+    ],
   },
   nitro: {
     experimental: {
