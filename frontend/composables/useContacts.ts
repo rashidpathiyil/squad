@@ -51,7 +51,7 @@ interface EnrichBulkResponse {
 }
 
 export const useContacts = () => {
-  const { get, post } = useApi()
+  const { get, post, postBulk } = useApi()
 
   // Get all contacts with pagination and filtering
   const getContacts = async (params: {
@@ -85,9 +85,9 @@ export const useContacts = () => {
     })
   }
 
-  // Bulk create contacts
+  // Bulk create contacts - use postBulk for longer timeout
   const createBulkContacts = async (contacts: OriginalContact[]) => {
-    return await post<BulkCreateResponse>('/contacts/bulk', {
+    return await postBulk<BulkCreateResponse>('/contacts/bulk', {
       contacts
     })
   }
@@ -97,9 +97,9 @@ export const useContacts = () => {
     return await post<ContactResponse>(`/contacts/${id}/enrich`)
   }
 
-  // Bulk enrich contacts
+  // Bulk enrich contacts - use postBulk for longer timeout
   const enrichBulkContacts = async (contactIds: string[]) => {
-    return await post<EnrichBulkResponse>('/contacts/enrich-bulk', {
+    return await postBulk<EnrichBulkResponse>('/contacts/enrich-bulk', {
       contactIds
     })
   }

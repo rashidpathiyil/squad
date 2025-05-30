@@ -32,7 +32,7 @@ func NewContactService(db *mongo.Database, cfg *config.Config) *ContactService {
 }
 
 func (s *ContactService) CreateContact(userID string, req models.CreateContactRequest) (*models.Contact, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.config.DefaultTimeout)
 	defer cancel()
 
 	userObjectID, err := primitive.ObjectIDFromHex(userID)
@@ -69,7 +69,8 @@ func (s *ContactService) CreateContact(userID string, req models.CreateContactRe
 }
 
 func (s *ContactService) BulkCreateContacts(userID string, req models.BulkCreateContactRequest) ([]models.Contact, []string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// Use configurable timeout for bulk operations
+	ctx, cancel := context.WithTimeout(context.Background(), s.config.BulkOperationTimeout)
 	defer cancel()
 
 	userObjectID, err := primitive.ObjectIDFromHex(userID)
@@ -81,18 +82,55 @@ func (s *ContactService) BulkCreateContacts(userID string, req models.BulkCreate
 	var errors []string
 	var documentsToInsert []interface{}
 
+	// Extract all emails for batch duplicate checking
+	emails := make([]string, len(req.Contacts))
+	emailToIndex := make(map[string]int)
+
 	for i, originalContact := range req.Contacts {
-		// Check for duplicates
-		filter := bson.M{
-			"userId":                userObjectID,
-			"originalContact.email": originalContact.Email,
-		}
+		emails[i] = originalContact.Email
+		emailToIndex[originalContact.Email] = i
+	}
+
+	// Batch check for existing contacts
+	filter := bson.M{
+		"userId":                userObjectID,
+		"originalContact.email": bson.M{"$in": emails},
+	}
+
+	cursor, err := s.contactCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to check for duplicates: %v", err)
+	}
+	defer cursor.Close(ctx)
+
+	// Create a set of existing emails
+	existingEmails := make(map[string]bool)
+	for cursor.Next(ctx) {
 		var existingContact models.Contact
-		err := s.contactCollection.FindOne(ctx, filter).Decode(&existingContact)
-		if err == nil {
-			errors = append(errors, fmt.Sprintf("Row %d: Contact with email %s already exists", i+1, originalContact.Email))
+		if err := cursor.Decode(&existingContact); err != nil {
 			continue
 		}
+		existingEmails[existingContact.OriginalContact.Email] = true
+	}
+
+	// Check for duplicates within the current batch as well
+	seenEmails := make(map[string]int) // email -> first occurrence index
+
+	// Process each contact
+	for i, originalContact := range req.Contacts {
+		// Check if email already exists in database
+		if existingEmails[originalContact.Email] {
+			errors = append(errors, fmt.Sprintf("Row %d: Contact with email %s already exists in database", i+1, originalContact.Email))
+			continue
+		}
+
+		// Check for duplicates within current batch
+		if firstIndex, exists := seenEmails[originalContact.Email]; exists {
+			errors = append(errors, fmt.Sprintf("Row %d: Duplicate email %s (first occurrence at row %d)", i+1, originalContact.Email, firstIndex+1))
+			continue
+		}
+
+		seenEmails[originalContact.Email] = i
 
 		contact := models.Contact{
 			ID:              primitive.NewObjectID(),
@@ -107,10 +145,26 @@ func (s *ContactService) BulkCreateContacts(userID string, req models.BulkCreate
 		documentsToInsert = append(documentsToInsert, contact)
 	}
 
+	// Insert in batches if we have a large number of contacts
 	if len(documentsToInsert) > 0 {
-		_, err = s.contactCollection.InsertMany(ctx, documentsToInsert)
-		if err != nil {
-			return nil, errors, err
+		const batchSize = 1000 // Process in batches of 1000
+
+		for i := 0; i < len(documentsToInsert); i += batchSize {
+			end := i + batchSize
+			if end > len(documentsToInsert) {
+				end = len(documentsToInsert)
+			}
+
+			batch := documentsToInsert[i:end]
+
+			// Use ordered=false for better performance (continues on error)
+			opts := options.InsertMany().SetOrdered(false)
+			_, err = s.contactCollection.InsertMany(ctx, batch, opts)
+			if err != nil {
+				// Even with unordered inserts, we might get some errors
+				// but the operation should continue for other documents
+				return contacts[:end-i], errors, fmt.Errorf("batch insert failed: %v", err)
+			}
 		}
 	}
 
@@ -118,7 +172,7 @@ func (s *ContactService) BulkCreateContacts(userID string, req models.BulkCreate
 }
 
 func (s *ContactService) GetContacts(userID string, page, pageSize int, status, search string) (*models.ContactListResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.config.DefaultTimeout)
 	defer cancel()
 
 	userObjectID, err := primitive.ObjectIDFromHex(userID)
@@ -178,7 +232,7 @@ func (s *ContactService) GetContacts(userID string, page, pageSize int, status, 
 }
 
 func (s *ContactService) GetContactByID(userID, contactID string) (*models.Contact, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.config.DefaultTimeout)
 	defer cancel()
 
 	userObjectID, err := primitive.ObjectIDFromHex(userID)
@@ -209,7 +263,7 @@ func (s *ContactService) GetContactByID(userID, contactID string) (*models.Conta
 }
 
 func (s *ContactService) EnrichContact(userID, contactID string) (*models.Contact, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.config.EnrichmentTimeout)
 	defer cancel()
 
 	// Get the contact
@@ -273,7 +327,7 @@ func (s *ContactService) BulkEnrichContacts(userID string, contactIDs []string) 
 }
 
 func (s *ContactService) GetContactStats(userID string) (*models.ContactStatsResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.config.DefaultTimeout)
 	defer cancel()
 
 	userObjectID, err := primitive.ObjectIDFromHex(userID)
@@ -332,7 +386,7 @@ func (s *ContactService) GetContactStats(userID string) (*models.ContactStatsRes
 }
 
 func (s *ContactService) updateContactStatus(contactID string, status models.ContactStatus) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.config.DefaultTimeout)
 	defer cancel()
 
 	contactObjectID, err := primitive.ObjectIDFromHex(contactID)
@@ -371,7 +425,8 @@ func (s *ContactService) callEnrichmentAPI(originalContact models.OriginalContac
 		req.Header.Set("Authorization", "Bearer "+s.config.EnrichmentAPIKey)
 	}
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	// Use configurable timeout for enrichment API calls
+	client := &http.Client{Timeout: s.config.EnrichmentTimeout}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

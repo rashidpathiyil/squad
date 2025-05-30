@@ -8,19 +8,19 @@
     </div>
 
     <!-- Upload Section -->
-    <Card class="p-6" v-if="!importData">
+    <Card v-if="!importData" class="p-6">
       <div class="space-y-4">
         <h3 class="text-lg font-semibold">Upload Excel File</h3>
         
         <!-- Drop Zone -->
         <div
-          @drop="onDrop"
-          @dragover="onDragOver"
-          @dragleave="onDragLeave"
           :class="[
             'border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer',
             isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
           ]"
+          @drop="onDrop"
+          @dragover="onDragOver"
+          @dragleave="onDragLeave"
           @click="fileInput?.click()"
         >
           <Upload class="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -37,7 +37,7 @@
           class="hidden"
           accept=".xlsx,.xls"
           @change="onFileSelect"
-        />
+        >
 
         <!-- Sample Format -->
         <div class="bg-muted/50 rounded-lg p-4">
@@ -45,6 +45,8 @@
           <div class="text-sm space-y-1">
             <p><strong>Required columns:</strong> Name, Email</p>
             <p><strong>Optional columns:</strong> Phone, Company, Title</p>
+            <p><strong>Recommended:</strong> Keep files under 5,000 contacts for optimal performance</p>
+            <p><strong>Maximum:</strong> 10,000 contacts per import</p>
           </div>
         </div>
       </div>
@@ -116,9 +118,9 @@
           <!-- Import Button -->
           <div class="flex justify-end">
             <Button 
-              @click="startImport" 
-              :disabled="importData.validRows === 0"
+              :disabled="importData.validRows === 0" 
               size="lg"
+              @click="startImport"
             >
               <Users class="mr-2 h-4 w-4" />
               Import {{ importData.validRows }} Contacts
@@ -145,7 +147,7 @@
             <div 
               class="bg-primary h-2 rounded-full transition-all duration-300"
               :style="{ width: `${importProgress}%` }"
-            ></div>
+            />
           </div>
         </div>
 
@@ -200,17 +202,17 @@
 </template>
 
 <script setup lang="ts">
+import {
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  RotateCcw,
+  Upload,
+  Users
+} from 'lucide-vue-next'
 import { ref } from 'vue'
 import * as XLSX from 'xlsx'
 import type { ImportResult, OriginalContact } from '~/types/contact'
-import { 
-  Upload, 
-  Users, 
-  RotateCcw, 
-  Loader2, 
-  CheckCircle,
-  AlertCircle
-} from 'lucide-vue-next'
 
 // Apply authentication middleware
 definePageMeta({
@@ -279,6 +281,18 @@ const parseContactData = (data: any[][]): ImportResult => {
   const headers = data[0]?.map(h => h?.toString().toLowerCase()) || []
   const rows = data.slice(1).filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''))
   
+  // Check for maximum row limit
+  const MAX_CONTACTS = 10000
+  if (rows.length > MAX_CONTACTS) {
+    return {
+      success: false,
+      totalRows: rows.length,
+      validRows: 0,
+      errors: [`File contains ${rows.length} contacts. Maximum allowed is ${MAX_CONTACTS} contacts per import. Please split your file into smaller batches.`],
+      contacts: []
+    }
+  }
+  
   const nameIndex = headers.findIndex(h => h?.includes('name'))
   const emailIndex = headers.findIndex(h => h?.includes('email'))
   const phoneIndex = headers.findIndex(h => h?.includes('phone'))
@@ -328,8 +342,13 @@ const parseContactData = (data: any[][]): ImportResult => {
     })
   })
   
+  // Show a warning for large files
+  if (contacts.length > 5000) {
+    errors.push(`Warning: Large file detected (${contacts.length} contacts). Import may take several minutes to complete.`)
+  }
+  
   return {
-    success: errors.length === 0,
+    success: errors.filter(e => !e.startsWith('Warning:')).length === 0,
     totalRows: rows.length,
     validRows: contacts.length,
     errors,
@@ -350,12 +369,12 @@ const startImport = async () => {
   importError.value = ''
   
   try {
-    // Start progress animation
+    // More realistic progress animation for bulk operations
     const progressInterval = setInterval(() => {
-      if (importProgress.value < 90) {
-        importProgress.value += 10
+      if (importProgress.value < 80) {
+        importProgress.value += Math.random() * 5 + 2 // Random increment between 2-7%
       }
-    }, 200)
+    }, 1000) // Update every second
     
     // Make API call to import contacts
     const response = await createBulkContacts(importData.value.contacts)
@@ -377,7 +396,16 @@ const startImport = async () => {
     
   } catch (error: any) {
     importing.value = false
-    importError.value = error.message || 'Failed to import contacts. Please try again.'
+    
+    // Better error handling for timeout and other issues
+    if (error.message?.includes('timeout') || error.message?.includes('deadline')) {
+      importError.value = 'Import operation timed out. This usually happens with very large files. Please try with smaller batches (under 1000 contacts) or contact support.'
+    } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+      importError.value = 'Network error occurred during import. Please check your connection and try again.'
+    } else {
+      importError.value = error.message || 'Failed to import contacts. Please try again.'
+    }
+    
     console.error('Import failed:', error)
   }
 }
