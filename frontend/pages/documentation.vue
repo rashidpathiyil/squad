@@ -5,12 +5,15 @@
       <div class="container mx-auto px-4 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <Icon name="carbon:api" class="w-8 h-8 text-blue-600" />
-          <NuxtLink to="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">CEA</NuxtLink>
+          <NuxtLink to="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">LeadUp
+          </NuxtLink>
         </div>
         <div class="flex items-center space-x-6">
           <NuxtLink to="/" class="text-gray-600 hover:text-gray-900 transition-colors">Home</NuxtLink>
           <span class="text-blue-600 font-medium">Documentation</span>
-          <NuxtLink to="/auth/register" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">Get Started</NuxtLink>
+          <NuxtLink to="/auth/register"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">Get Started
+          </NuxtLink>
         </div>
       </div>
     </nav>
@@ -42,11 +45,11 @@
         <!-- Overview Section -->
         <section id="overview" class="bg-white rounded-lg shadow-md p-8 mb-8">
           <h2 class="text-3xl font-bold text-gray-900 mb-6">🚀 Overview</h2>
-          
+
           <div class="prose max-w-none">
             <p class="text-lg text-gray-700 mb-6">
-              Our Contact Enrichment API transforms basic contact information into comprehensive professional profiles. 
-              Using AI-powered web search and data extraction, it provides detailed insights including job titles, 
+              Our Contact Enrichment API transforms basic contact information into comprehensive professional profiles.
+              Using AI-powered web search and data extraction, it provides detailed insights including job titles,
               company information, social profiles, and professional background.
             </p>
 
@@ -62,7 +65,7 @@
                   <li>Enterprise-grade security</li>
                 </ul>
               </div>
-              
+
               <div class="bg-green-50 p-6 rounded-lg">
                 <h3 class="text-xl font-semibold text-green-900 mb-3">📊 What You Get</h3>
                 <ul class="list-disc list-inside text-green-800 space-y-2">
@@ -81,7 +84,7 @@
         <!-- Authentication Section -->
         <section id="authentication" class="bg-white rounded-lg shadow-md p-8 mb-8">
           <h2 class="text-3xl font-bold text-gray-900 mb-6">🔐 Authentication</h2>
-          
+
           <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
             <div class="flex">
               <div class="ml-3">
@@ -95,38 +98,41 @@
           <div class="space-y-6">
             <div>
               <h3 class="text-xl font-semibold mb-3">Authentication Methods</h3>
-              
-              <div class="grid md:grid-cols-2 gap-6">
+
+              <div class="space-y-6">
                 <div class="bg-gray-50 p-4 rounded-lg">
                   <h4 class="font-semibold text-gray-900 mb-2">Method 1: X-API-Key Header</h4>
-                  <pre class="bg-gray-800 text-green-400 p-3 rounded text-sm overflow-x-auto"><code>curl -H "X-API-Key: your_api_key_here" \
+                  <div class="relative">
+                    <pre class="bg-gray-800 text-green-400 p-3 rounded text-sm overflow-x-auto"><code>curl -H "X-API-Key: your_api_key_here" \
        -H "Content-Type: application/json" \
-       -X POST https://api.yourservice.com/api/contact-enrichment</code></pre>
+       -X POST https://squad-4-qc-production.up.railway.app/api/contact-enrichment</code></pre>
+                    <CopyButton
+                      :text='`curl -H "X-API-Key: your_api_key_here" -H "Content-Type: application/json" -X POST https://squad-4-qc-production.up.railway.app/api/contact-enrichment`' />
+                  </div>
                 </div>
-                
+
                 <div class="bg-gray-50 p-4 rounded-lg">
                   <h4 class="font-semibold text-gray-900 mb-2">Method 2: Bearer Token</h4>
-                  <pre class="bg-gray-800 text-green-400 p-3 rounded text-sm overflow-x-auto"><code>curl -H "Authorization: Bearer your_api_key_here" \
+                  <div class="relative">
+                    <pre class="bg-gray-800 text-green-400 p-3 rounded text-sm overflow-x-auto"><code>curl -H "Authorization: Bearer your_api_key_here" \
        -H "Content-Type: application/json" \
-       -X POST https://api.yourservice.com/api/contact-enrichment</code></pre>
+       -X POST https://squad-4-qc-production.up.railway.app/api/contact-enrichment</code></pre>
+                    <CopyButton
+                      :text='`curl -H "Authorization: Bearer your_api_key_here" -H "Content-Type: application/json" -X POST https://squad-4-qc-production.up.railway.app/api/contact-enrichment`' />
+                  </div>
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 class="text-xl font-semibold mb-3">Base URLs</h3>
+              <h3 class="text-xl font-semibold mb-3">Base URL</h3>
               <div class="space-y-3">
-                <div class="flex items-center space-x-3">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Production
-                  </span>
-                  <code class="text-sm bg-gray-100 px-2 py-1 rounded">https://enrichment.yourapi.com</code>
-                </div>
-                <div class="flex items-center space-x-3">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    Development
-                  </span>
-                  <code class="text-sm bg-gray-100 px-2 py-1 rounded">http://localhost:3001</code>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <div class="relative">
+                    <pre
+                      class="bg-gray-800 text-green-400 p-3 rounded text-sm overflow-x-auto"><code>https://squad-4-qc-production.up.railway.app/</code></pre>
+                    <CopyButton :text="'https://squad-4-qc-production.up.railway.app/'" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -140,13 +146,14 @@
           <!-- Health Check -->
           <div class="mb-8 border-b pb-6">
             <div class="flex items-center space-x-3 mb-4">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                 GET
               </span>
               <code class="text-lg font-mono">/api/health</code>
             </div>
             <p class="text-gray-600 mb-4">Check service health status (no authentication required)</p>
-            
+
             <div class="bg-gray-50 p-4 rounded-lg">
               <h4 class="font-semibold mb-2">Example Response:</h4>
               <pre class="bg-gray-800 text-green-400 p-3 rounded text-sm overflow-x-auto"><code>{
@@ -161,7 +168,8 @@
           <!-- Contact Enrichment -->
           <div class="mb-8">
             <div class="flex items-center space-x-3 mb-4">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                 POST
               </span>
               <code class="text-lg font-mono">/api/contact-enrichment</code>
@@ -243,15 +251,15 @@
             <div class="border-l-4 border-green-500 pl-6">
               <h3 class="text-xl font-semibold text-green-900 mb-3">Step 2: Set Up Your Environment</h3>
               <p class="text-gray-700 mb-3">Configure your application with the API endpoint and authentication:</p>
-              
+
               <div class="grid md:grid-cols-2 gap-6">
                 <div>
                   <h4 class="font-semibold mb-2">Environment Variables</h4>
-                  <pre class="bg-gray-800 text-green-400 p-3 rounded text-sm"><code>ENRICHMENT_API_URL=https://enrichment.yourapi.com
-  ENRICHMENT_API_KEY=your_api_key_here
-  ENRICHMENT_TIMEOUT=30s</code></pre>
+                  <pre class="bg-gray-800 text-green-400 p-3 rounded text-sm"><code>ENRICHMENT_API_URL=https://squad-4-qc-production.up.railway.app/
+      ENRICHMENT_API_KEY=your_api_key_here
+      ENRICHMENT_TIMEOUT=30s</code></pre>
                 </div>
-                
+
                 <div>
                   <h4 class="font-semibold mb-2">Configuration Example (Go)</h4>
                   <pre class="bg-gray-800 text-green-400 p-3 rounded text-sm overflow-x-auto"><code>type Config struct {
@@ -267,7 +275,7 @@
             <div class="border-l-4 border-purple-500 pl-6">
               <h3 class="text-xl font-semibold text-purple-900 mb-3">Step 3: Implement the Integration</h3>
               <p class="text-gray-700 mb-4">Here's how we integrated it in our backend (Go example):</p>
-              
+
               <div class="bg-gray-50 p-4 rounded-lg">
                 <pre class="bg-gray-800 text-green-400 p-4 rounded text-sm overflow-x-auto"><code>func (s *ContactService) callEnrichmentAPI(contact OriginalContact) (*EnrichmentResponse, error) {
       reqBody := EnrichmentRequest{
@@ -309,7 +317,7 @@
             <div class="border-l-4 border-yellow-500 pl-6">
               <h3 class="text-xl font-semibold text-yellow-900 mb-3">Step 4: Handle Responses</h3>
               <p class="text-gray-700 mb-4">Process the enriched data and update your CRM records:</p>
-              
+
               <div class="space-y-4">
                 <div>
                   <h4 class="font-semibold mb-2">Data Models (Go)</h4>
@@ -326,7 +334,7 @@
       OverallConfidence int      `json:"overallConfidence"`
   }</code></pre>
                 </div>
-                
+
                 <div>
                   <h4 class="font-semibold mb-2">Error Handling</h4>
                   <pre class="bg-gray-800 text-green-400 p-3 rounded text-sm overflow-x-auto"><code>// Always check confidence scores
@@ -353,7 +361,7 @@
             <div>
               <h3 class="text-xl font-semibold mb-4">JavaScript/Node.js</h3>
               <pre class="bg-gray-800 text-green-400 p-4 rounded text-sm overflow-x-auto"><code>const enrichContact = async (contactInfo) => {
-    const response = await fetch('https://enrichment.yourapi.com/api/contact-enrichment', {
+    const response = await fetch('https://squad-4-qc-production.up.railway.app/api/contact-enrichment', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -384,7 +392,7 @@
   import os
 
   def enrich_contact(contact_info):
-      url = "https://enrichment.yourapi.com/api/contact-enrichment"
+      url = "https://squad-4-qc-production.up.railway.app/api/contact-enrichment"
       
       headers = {
           "Content-Type": "application/json",
@@ -410,7 +418,7 @@
             <div>
               <h3 class="text-xl font-semibold mb-4">PHP</h3>
               <pre class="bg-gray-800 text-green-400 p-4 rounded text-sm overflow-x-auto"><code>function enrichContact($contactInfo) {
-      $url = 'https://enrichment.yourapi.com/api/contact-enrichment';
+      $url = 'https://squad-4-qc-production.up.railway.app/api/contact-enrichment';
       
       $headers = [
           'Content-Type: application/json',
@@ -445,7 +453,7 @@
         <!-- Best Practices -->
         <section class="bg-white rounded-lg shadow-md p-8 mb-8">
           <h2 class="text-3xl font-bold text-gray-900 mb-6">✅ Best Practices</h2>
-          
+
           <div class="grid md:grid-cols-2 gap-8">
             <div>
               <h3 class="text-lg font-semibold text-green-900 mb-4">✅ Do's</h3>
@@ -476,7 +484,7 @@
                 </li>
               </ul>
             </div>
-            
+
             <div>
               <h3 class="text-lg font-semibold text-red-900 mb-4">❌ Don'ts</h3>
               <ul class="space-y-3 text-gray-700">
@@ -512,7 +520,7 @@
         <!-- Support Section -->
         <section class="bg-white rounded-lg shadow-md p-8">
           <h2 class="text-3xl font-bold text-gray-900 mb-6">🎯 Support & Resources</h2>
-          
+
           <div class="grid md:grid-cols-3 gap-6">
             <div class="bg-blue-50 p-6 rounded-lg text-center">
               <div class="text-3xl mb-3">📚</div>
@@ -521,7 +529,7 @@
                 Comprehensive guides and API references
               </p>
             </div>
-            
+
             <div class="bg-green-50 p-6 rounded-lg text-center">
               <div class="text-3xl mb-3">💬</div>
               <h3 class="text-lg font-semibold text-green-900 mb-2">Developer Support</h3>
@@ -529,7 +537,7 @@
                 Get help from our technical team
               </p>
             </div>
-            
+
             <div class="bg-purple-50 p-6 rounded-lg text-center">
               <div class="text-3xl mb-3">🔧</div>
               <h3 class="text-lg font-semibold text-purple-900 mb-2">Integration Help</h3>
@@ -538,16 +546,18 @@
               </p>
             </div>
           </div>
-          
+
           <div class="mt-8 text-center">
             <p class="text-gray-600 mb-4">
               Need help integrating our API? Our team is here to support you.
             </p>
             <div class="space-x-4">
-              <a href="mailto:support@yourapi.com" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+              <a href="mailto:support@yourapi.com"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
                 Contact Support
               </a>
-              <NuxtLink to="/" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+              <NuxtLink to="/"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                 Back to Home
               </NuxtLink>
             </div>
@@ -559,6 +569,9 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
+import CopyButton from '~/components/CopyButton.vue'
+
 // Set page meta
 definePageMeta({
   title: 'API Documentation - Contact Enrichment',
@@ -597,4 +610,4 @@ pre {
 a {
   transition: all 0.2s ease-in-out;
 }
-</style> 
+</style>
