@@ -1,21 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
-    <!-- Navigation -->
-    <nav class="fixed w-full z-50 bg-gray-900/50 backdrop-blur-lg border-b border-gray-800">
-      <div class="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <Icon name="carbon:api" class="w-8 h-8 text-blue-400" />
-          <span class="text-xl font-bold">CEA</span>
-        </div>
-        <div class="flex items-center space-x-6">
-          <NuxtLink to="/docs" class="text-gray-300 hover:text-white transition-colors">Documentation</NuxtLink>
-          <NuxtLink to="/auth/register" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors">Get Started</NuxtLink>
-        </div>
-      </div>
-    </nav>
-
+  <div class="min-h-screen  text-white">
     <!-- Hero Section -->
-    <div class="container mx-auto px-4 pt-32 pb-20">
+    <div class="container mx-auto px-4 pt-12 pb-20">
       <div class="text-center mb-16 space-y-6">
         <h1 class="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-gradient">
           Transform Your Leads into<br>Actionable Intelligence
@@ -27,7 +13,7 @@
           <NuxtLink to="/auth/register" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105">
             Get Started
           </NuxtLink>
-          <NuxtLink to="/docs" class="px-8 py-4 bg-gray-800 hover:bg-gray-700 rounded-lg font-semibold transition-all duration-200">
+          <NuxtLink to="/documentation" class="px-8 py-4 bg-gray-800 hover:bg-gray-700 rounded-lg font-semibold transition-all duration-200">
             View Documentation
           </NuxtLink>
         </div>
@@ -115,9 +101,9 @@
               <h3 class="text-xl font-semibold text-blue-400 mb-4">Enriched Data Results</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div
-v-for="(value, key) in enrichedData" :key="key" 
+                  v-for="(value, key) in enrichedData" :key="String(key)" 
                   class="bg-gray-700/30 p-4 rounded-xl hover:bg-gray-700/40 transition-colors">
-                  <div class="text-sm text-gray-400 mb-1">{{ formatKey(key) }}</div>
+                  <div class="text-sm text-gray-400 mb-1">{{ formatKey(String(key)) }}</div>
                   <div class="text-white">{{ formatValue(value) }}</div>
                 </div>
               </div>
@@ -161,7 +147,7 @@ v-for="(value, key) in enrichedData" :key="key"
             <NuxtLink to="/auth/register" class="px-8 py-4 bg-white text-gray-900 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
               Get Started
             </NuxtLink>
-            <NuxtLink to="/docs" class="px-8 py-4 bg-transparent border-2 border-white rounded-lg font-semibold hover:bg-white/10 transition-colors">
+            <NuxtLink to="/documentation" class="px-8 py-4 bg-transparent border-2 border-white rounded-lg font-semibold hover:bg-white/10 transition-colors">
               View Documentation
             </NuxtLink>
           </div>
@@ -175,7 +161,7 @@ v-for="(value, key) in enrichedData" :key="key"
 import { ref } from 'vue';
 
 definePageMeta({
-  layout: 'empty',
+  layout: 'home',
 })
 
 const userData = ref({
