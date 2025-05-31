@@ -1,0 +1,16 @@
+FROM searxng/searxng:latest
+
+# Copy custom configuration files
+COPY searxng/settings.yml /etc/searxng/settings.yml
+COPY searxng/uwsgi.ini /etc/searxng/uwsgi.ini  
+COPY searxng/limiter.toml /etc/searxng/limiter.toml
+
+# Expose port 8080 (SearXNG default)
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/search?q=test&format=json || exit 1
+
+# Use the default SearXNG entrypoint
+CMD ["/usr/local/searxng/dockerfiles/docker-entrypoint.sh"] 

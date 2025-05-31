@@ -1,0 +1,35 @@
+# Development files
+node_modules/
+.DS_Store
+*.log
+*.tmp
+
+# Build artifacts (except for .output which is needed)
+.nitro/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Test files
+test-*.sh
+test-*.js
+test-*.json
+
+# Documentation (optional - remove these lines if you want docs in production)
+README.md
+*.md
+!README-Railway-Deployment.md
+
+# Docker compose (not used in Railway)
+docker-compose.yaml
+docker-compose.yml
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/ 
