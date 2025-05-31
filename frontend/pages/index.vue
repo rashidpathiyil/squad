@@ -98,13 +98,69 @@
             leave-to-class="transform -translate-y-4 opacity-0"
           >
             <div v-if="enrichedData" class="mt-8">
-              <h3 class="text-xl font-semibold text-blue-400 mb-4">Enriched Data Results</h3>
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold text-blue-400">Enriched Data Results</h3>
+                <div v-if="enrichedData.confidence_score" class="flex items-center space-x-2">
+                  <span class="text-sm text-gray-400">Confidence:</span>
+                  <span class="px-2 py-1 rounded-full text-xs font-medium"
+                        :class="getConfidenceColor(enrichedData.confidence_score)">
+                    {{ enrichedData.confidence_score }}%
+                  </span>
+                </div>
+              </div>
+              
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div
-                  v-for="(value, key) in enrichedData" :key="String(key)" 
+                  v-for="(value, key) in filteredEnrichedData" :key="String(key)" 
                   class="bg-gray-700/30 p-4 rounded-xl hover:bg-gray-700/40 transition-colors">
                   <div class="text-sm text-gray-400 mb-1">{{ formatKey(String(key)) }}</div>
                   <div class="text-white">{{ formatValue(value) }}</div>
+                </div>
+              </div>
+
+              <!-- Data Sources -->
+              <div v-if="enrichedData.sources && Object.keys(enrichedData.sources).length > 0" class="mt-6">
+                <h4 class="text-sm font-medium text-gray-400 mb-2">Data Sources:</h4>
+                <div class="flex flex-wrap gap-2">
+                  <span 
+                    v-for="(url, source) in enrichedData.sources" 
+                    :key="source"
+                    class="px-2 py-1 bg-blue-600/20 text-blue-300 rounded text-xs">
+                    {{ formatKey(String(source)) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Fields Enriched -->
+              <div v-if="enrichedData.fields_enriched && enrichedData.fields_enriched.length > 0" class="mt-4">
+                <h4 class="text-sm font-medium text-gray-400 mb-2">Fields Successfully Enriched:</h4>
+                <div class="flex flex-wrap gap-2">
+                  <span 
+                    v-for="field in enrichedData.fields_enriched" 
+                    :key="field"
+                    class="px-2 py-1 bg-green-600/20 text-green-300 rounded text-xs">
+                    {{ formatKey(field) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Transition>
+
+          <!-- Error Message -->
+          <Transition
+            enter-active-class="transition duration-300 ease-out"
+            enter-from-class="transform -translate-y-4 opacity-0"
+            enter-to-class="transform translate-y-0 opacity-100"
+            leave-active-class="transition duration-200 ease-in"
+            leave-from-class="transform translate-y-0 opacity-100"
+            leave-to-class="transform -translate-y-4 opacity-0"
+          >
+            <div v-if="errorMessage" class="mt-8 p-4 bg-red-600/20 border border-red-600/30 rounded-lg">
+              <div class="flex items-center space-x-2">
+                <Icon name="carbon:warning" class="w-5 h-5 text-red-400" />
+                <div>
+                  <p class="text-red-400 font-medium">Enrichment Failed</p>
+                  <p class="text-red-300 text-sm">{{ errorMessage }}</p>
                 </div>
               </div>
             </div>
@@ -158,7 +214,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 definePageMeta({
   layout: 'home',
@@ -175,17 +231,59 @@ const loading = ref(false)
 
 interface EnrichedData {
   email: string;
-  magic_score: number;
-  user_status: string;
-  engagement_level: string;
-  surprise_factor: string;
-  last_activity: string;
-  predicted_interests: string[];
-  trust_score: string;
-  [key: string]: string | number | string[];
+  name: string;
+  company: string;
+  job_title: string;
+  magic_score?: number;
+  user_status?: string;
+  engagement_level?: string;
+  surprise_factor?: string;
+  last_activity?: string;
+  predicted_interests?: string[];
+  trust_score?: string;
+  confidence_score?: number;
+  sources?: Record<string, string>;
+  fields_enriched?: string[];
+  fields_not_found?: string[];
+  industry?: string;
+  location?: string;
+  bio?: string;
+  skills?: string[];
+  social_profiles?: {
+    linkedin?: string;
+    github?: string;
+    twitter?: string;
+    personal_blog?: string;
+  };
+  phone?: string;
+  data_source?: string;
+  [key: string]: any;
 }
 
 const enrichedData = ref<EnrichedData | null>(null)
+const errorMessage = ref<string | null>(null)
+
+// Filter out metadata fields from display
+const filteredEnrichedData = computed(() => {
+  if (!enrichedData.value) return {}
+  
+  const filtered: Record<string, string> = {}
+  const excludeFields = ['sources', 'fields_enriched', 'fields_not_found', 'confidence_score']
+  
+  Object.entries(enrichedData.value).forEach(([key, value]) => {
+    if (!excludeFields.includes(key) && value !== undefined && value !== null) {
+      if (Array.isArray(value)) {
+        filtered[key] = value.join(', ')
+      } else if (typeof value === 'object') {
+        filtered[key] = JSON.stringify(value, null, 2)
+      } else {
+        filtered[key] = String(value)
+      }
+    }
+  })
+  
+  return filtered
+})
 
 const features = [
   {
@@ -226,8 +324,17 @@ const formatValue = (value: string | number | string[]): string => {
   return String(value)
 }
 
+const getConfidenceColor = (confidence: number): string => {
+  if (confidence < 50) return 'bg-red-600/20 text-red-300'
+  if (confidence < 75) return 'bg-yellow-600/20 text-yellow-300'
+  return 'bg-green-600/20 text-green-300'
+}
+
 async function enrichUser() {
   loading.value = true
+  errorMessage.value = null
+  enrichedData.value = null
+  
   try {
     const response = await fetch('/api/enrich', {
       method: 'POST',
@@ -237,12 +344,15 @@ async function enrichUser() {
       body: JSON.stringify(userData.value),
     })
     
-    if (!response.ok) throw new Error('Failed to enrich data')
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.statusMessage || `HTTP ${response.status}`)
+    }
     
     enrichedData.value = await response.json()
   } catch (error) {
     console.error('Error:', error)
-    // TODO: Add proper error handling with toast notification
+    errorMessage.value = error instanceof Error ? error.message : 'Failed to enrich data'
   } finally {
     loading.value = false
   }

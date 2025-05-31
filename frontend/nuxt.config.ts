@@ -28,7 +28,11 @@ export default defineNuxtConfig({
     // Private keys (only available on the server-side)
     session: {
       maxAge: 60 * 60 * 24 * 7, // 1 week
+      password: process.env.NUXT_SESSION_PASSWORD || 'default-dev-password-change-in-production',
     },
+    // CEA API Configuration
+    ceaApiUrl: process.env.CEA_API_URL || 'http://localhost:3001',
+    ceaApiKey: process.env.CEA_API_KEY,
     // Public keys (exposed to the client-side)
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080/api/v1'
