@@ -3,21 +3,16 @@
     <!-- Sidebar -->
     <div class="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r">
       <div class="flex h-16 items-center border-b px-6">
-        <NuxtLink to="/app" class="text-xl font-bold">CEA</NuxtLink>
+        <NuxtLink to="/app" class="text-xl font-bold">LeadUp</NuxtLink>
       </div>
-      
+
       <nav class="flex-1 space-y-1 p-4">
-        <NuxtLink
-          v-for="item in navigation"
-          :key="item.name"
-          :to="item.href"
-          :class="[
-            'flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors',
-            $route.path === item.href
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-          ]"
-        >
+        <NuxtLink v-for="item in navigation" :key="item.name" :to="item.href" :class="[
+          'flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors',
+          $route.path === item.href
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+        ]">
           <component :is="item.icon" class="mr-3 h-5 w-5" />
           {{ item.name }}
         </NuxtLink>
@@ -27,28 +22,25 @@
     <!-- Main Content -->
     <div class="pl-64">
       <!-- Header -->
-      <header class="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header
+        class="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div class="flex h-16 items-center justify-between px-6">
           <div class="flex items-center space-x-4">
             <h2 class="text-lg font-semibold">{{ pageTitle }}</h2>
           </div>
-          
+
           <div class="flex items-center space-x-4">
             <!-- Theme Toggle -->
             <Button variant="ghost" size="icon" @click="toggleColorMode">
               <Sun v-if="$colorMode.value === 'dark'" class="h-5 w-5" />
               <Moon v-else class="h-5 w-5" />
             </Button>
-            
+
             <!-- User Menu -->
             <AuthState>
               <template #default="{ loggedIn, user, clear }">
                 <div v-if="loggedIn" class="relative">
-                  <Button
-                    variant="ghost" 
-                    class="flex items-center space-x-2"
-                    @click="showUserMenu = !showUserMenu"
-                  >
+                  <Button variant="ghost" class="flex items-center space-x-2" @click="showUserMenu = !showUserMenu">
                     <div class="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
                       <span class="text-sm font-medium text-primary-foreground">
                         {{ user?.user?.name?.charAt(0)?.toUpperCase() || 'U' }}
@@ -57,20 +49,16 @@
                     <span class="text-sm font-medium">{{ user?.user?.name }}</span>
                     <ChevronDown class="h-4 w-4" />
                   </Button>
-                  
+
                   <!-- Dropdown Menu -->
-                  <div 
-                    v-if="showUserMenu"
-                    class="absolute right-0 mt-2 w-48 bg-card border rounded-md shadow-lg z-50"
-                  >
+                  <div v-if="showUserMenu" class="absolute right-0 mt-2 w-48 bg-card border rounded-md shadow-lg z-50">
                     <div class="py-1">
                       <div class="px-4 py-2 text-sm text-muted-foreground border-b">
                         {{ user?.user?.email }}
                       </div>
                       <button
                         class="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center"
-                        @click="handleLogout(clear)"
-                      >
+                        @click="handleLogout(clear)">
                         <LogOut class="mr-2 h-4 w-4" />
                         Sign out
                       </button>
@@ -86,7 +74,7 @@
                 </div>
               </template>
               <template #placeholder>
-                <div class="h-8 w-20 bg-accent rounded animate-pulse"/>
+                <div class="h-8 w-20 bg-accent rounded animate-pulse" />
               </template>
             </AuthState>
           </div>
@@ -129,7 +117,7 @@ const navigation = [
 
 const pageTitle = computed(() => {
   const currentRoute = navigation.find(item => item.href === route.path)
-  return currentRoute?.name || 'CEA'
+  return currentRoute?.name || 'LeadUp'
 })
 
 const toggleColorMode = () => {
@@ -154,5 +142,4 @@ onMounted(() => {
     }
   })
 })
-</script> 
- 
+</script>
