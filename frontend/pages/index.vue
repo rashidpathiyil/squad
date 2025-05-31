@@ -98,48 +98,168 @@
             leave-to-class="transform -translate-y-4 opacity-0"
           >
             <div v-if="enrichedData" class="mt-8">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xl font-semibold text-blue-400">Enriched Data Results</h3>
-                <div v-if="enrichedData.confidence_score" class="flex items-center space-x-2">
-                  <span class="text-sm text-gray-400">Confidence:</span>
-                  <span class="px-2 py-1 rounded-full text-xs font-medium"
-                        :class="getConfidenceColor(enrichedData.confidence_score)">
-                    {{ enrichedData.confidence_score }}%
-                  </span>
+              <!-- Header with overall confidence -->
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-blue-400">✨ AI-Powered Enrichment Results</h3>
+                <div class="flex items-center space-x-3">
+                  <div v-if="enrichedData.semantic_search_used" class="flex items-center space-x-1">
+                    <Icon name="carbon:search" class="w-4 h-4 text-green-400" />
+                    <span class="text-xs text-green-300">Semantic Search</span>
+                  </div>
+                  <div v-if="enrichedData.confidence_score" class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-400">Overall Confidence:</span>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium"
+                          :class="getConfidenceColor(enrichedData.confidence_score)">
+                      {{ enrichedData.confidence_score }}%
+                    </span>
+                  </div>
                 </div>
               </div>
-              
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div
-                  v-for="(value, key) in filteredEnrichedData" :key="String(key)" 
-                  class="bg-gray-700/30 p-4 rounded-xl hover:bg-gray-700/40 transition-colors">
-                  <div class="text-sm text-gray-400 mb-1">{{ formatKey(String(key)) }}</div>
-                  <div class="text-white">{{ formatValue(value) }}</div>
+
+              <!-- Enhanced Data Grid -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Contact Information -->
+                <div class="bg-gray-700/30 p-6 rounded-xl border border-gray-600/30">
+                  <h4 class="text-lg font-semibold text-blue-300 mb-4 flex items-center">
+                    <Icon name="carbon:user" class="w-5 h-5 mr-2" />
+                    Contact Details
+                  </h4>
+                  <div class="space-y-3">
+                    <div v-for="field in ['name', 'email', 'job_title', 'company', 'location', 'phone']" 
+                         :key="field"
+                         class="flex justify-between items-center">
+                      <span class="text-gray-400 text-sm">{{ formatKey(field) }}:</span>
+                      <div class="flex items-center space-x-2">
+                        <span class="text-white text-sm">{{ enrichedData[field] || 'Not found' }}</span>
+                        <span v-if="enrichedData.confidence_details?.[field]" 
+                              class="px-2 py-1 rounded text-xs"
+                              :class="getConfidenceColor(enrichedData.confidence_details[field])">
+                          {{ enrichedData.confidence_details[field] }}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Professional Information -->
+                <div class="bg-gray-700/30 p-6 rounded-xl border border-gray-600/30">
+                  <h4 class="text-lg font-semibold text-green-300 mb-4 flex items-center">
+                    <Icon name="carbon:identification" class="w-5 h-5 mr-2" />
+                    Professional Profile
+                  </h4>
+                  <div class="space-y-3">
+                    <div>
+                      <span class="text-gray-400 text-sm">Bio:</span>
+                      <p class="text-white text-sm mt-1">{{ enrichedData.bio || 'Not available' }}</p>
+                      <span v-if="enrichedData.confidence_details?.bio" 
+                            class="inline-block mt-1 px-2 py-1 rounded text-xs"
+                            :class="getConfidenceColor(enrichedData.confidence_details.bio)">
+                        {{ enrichedData.confidence_details.bio }}% confidence
+                      </span>
+                    </div>
+                    <div v-if="enrichedData.skills && enrichedData.skills.length > 0">
+                      <span class="text-gray-400 text-sm">Skills:</span>
+                      <div class="flex flex-wrap gap-2 mt-2">
+                        <span v-for="skill in enrichedData.skills" 
+                              :key="skill"
+                              class="px-2 py-1 bg-blue-600/20 text-blue-300 rounded text-xs">
+                          {{ skill }}
+                        </span>
+                      </div>
+                      <span v-if="enrichedData.confidence_details?.skills" 
+                            class="inline-block mt-1 px-2 py-1 rounded text-xs"
+                            :class="getConfidenceColor(enrichedData.confidence_details.skills)">
+                        {{ enrichedData.confidence_details.skills }}% confidence
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Social Profiles -->
+              <div v-if="hasSocialProfiles" class="bg-gray-700/30 p-6 rounded-xl border border-gray-600/30 mb-6">
+                <h4 class="text-lg font-semibold text-purple-300 mb-4 flex items-center">
+                  <Icon name="carbon:share" class="w-5 h-5 mr-2" />
+                  Social Profiles
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div v-for="platform in ['linkedin', 'github', 'twitter', 'personal_blog']" 
+                       :key="platform"
+                       class="flex justify-between items-center">
+                    <span class="text-gray-400 text-sm capitalize">{{ formatKey(platform) }}:</span>
+                    <div class="flex items-center space-x-2">
+                      <a v-if="enrichedData[platform] && enrichedData[platform] !== 'Not found'" 
+                         :href="enrichedData[platform]" 
+                         target="_blank"
+                         class="text-blue-400 hover:text-blue-300 text-sm truncate max-w-48">
+                        {{ enrichedData[platform] }}
+                      </a>
+                      <span v-else class="text-gray-500 text-sm">Not found</span>
+                      <span v-if="platform === 'linkedin' && enrichedData.confidence_details?.linkedin" 
+                            class="px-2 py-1 rounded text-xs"
+                            :class="getConfidenceColor(enrichedData.confidence_details.linkedin)">
+                        {{ enrichedData.confidence_details.linkedin }}%
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <!-- Data Sources -->
-              <div v-if="enrichedData.sources && Object.keys(enrichedData.sources).length > 0" class="mt-6">
-                <h4 class="text-sm font-medium text-gray-400 mb-2">Data Sources:</h4>
+              <div v-if="enrichedData.sources && Object.keys(enrichedData.sources).length > 0" class="mb-6">
+                <h4 class="text-sm font-medium text-gray-400 mb-3 flex items-center">
+                  <Icon name="carbon:data-base" class="w-4 h-4 mr-2" />
+                  Data Sources
+                </h4>
                 <div class="flex flex-wrap gap-2">
-                  <span 
-                    v-for="(url, source) in enrichedData.sources" 
-                    :key="source"
-                    class="px-2 py-1 bg-blue-600/20 text-blue-300 rounded text-xs">
-                    {{ formatKey(String(source)) }}
-                  </span>
+                  <div v-for="(source, field) in enrichedData.sources" 
+                       :key="field"
+                       class="px-3 py-2 bg-blue-600/20 text-blue-300 rounded-lg text-xs">
+                    <span class="font-medium">{{ formatKey(String(field)) }}:</span>
+                    <span class="ml-1">{{ source }}</span>
+                  </div>
                 </div>
               </div>
 
-              <!-- Fields Enriched -->
-              <div v-if="enrichedData.fields_enriched && enrichedData.fields_enriched.length > 0" class="mt-4">
-                <h4 class="text-sm font-medium text-gray-400 mb-2">Fields Successfully Enriched:</h4>
-                <div class="flex flex-wrap gap-2">
-                  <span 
-                    v-for="field in enrichedData.fields_enriched" 
-                    :key="field"
-                    class="px-2 py-1 bg-green-600/20 text-green-300 rounded text-xs">
-                    {{ formatKey(field) }}
+              <!-- Enrichment Summary -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Fields Successfully Enriched -->
+                <div v-if="enrichedData.fields_enriched && enrichedData.fields_enriched.length > 0">
+                  <h4 class="text-sm font-medium text-green-400 mb-3 flex items-center">
+                    <Icon name="carbon:checkmark" class="w-4 h-4 mr-2" />
+                    Successfully Enriched ({{ enrichedData.fields_enriched.length }})
+                  </h4>
+                  <div class="flex flex-wrap gap-2">
+                    <span v-for="field in enrichedData.fields_enriched" 
+                          :key="field"
+                          class="px-3 py-1 bg-green-600/20 text-green-300 rounded-full text-xs">
+                      {{ formatKey(field) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Fields Not Found -->
+                <div v-if="enrichedData.fields_not_found && enrichedData.fields_not_found.length > 0">
+                  <h4 class="text-sm font-medium text-orange-400 mb-3 flex items-center">
+                    <Icon name="carbon:warning" class="w-4 h-4 mr-2" />
+                    Not Found ({{ enrichedData.fields_not_found.length }})
+                  </h4>
+                  <div class="flex flex-wrap gap-2">
+                    <span v-for="field in enrichedData.fields_not_found" 
+                          :key="field"
+                          class="px-3 py-1 bg-orange-600/20 text-orange-300 rounded-full text-xs">
+                      {{ formatKey(field) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Metadata -->
+              <div v-if="enrichedData.data_source" class="mt-6 pt-4 border-t border-gray-600/30">
+                <div class="flex justify-between items-center text-xs text-gray-500">
+                  <span>{{ enrichedData.data_source }}</span>
+                  <span v-if="enrichedData.enrichment_timestamp">
+                    {{ new Date(enrichedData.enrichment_timestamp).toLocaleString() }}
                   </span>
                 </div>
               </div>
@@ -234,6 +354,25 @@ interface EnrichedData {
   name: string;
   company: string;
   job_title: string;
+  location?: string;
+  bio?: string;
+  skills?: string[];
+  linkedin?: string;
+  github?: string;
+  twitter?: string;
+  personal_blog?: string;
+  industry?: string;
+  phone?: string;
+  confidence_score?: number;
+  sources?: Record<string, string>;
+  fields_enriched?: string[];
+  fields_not_found?: string[];
+  confidence_details?: Record<string, number>;
+  semantic_search_used?: boolean;
+  original_contact?: { name: string; email: string };
+  enrichment_timestamp?: string;
+  data_source?: string;
+  // Legacy fields for backward compatibility
   magic_score?: number;
   user_status?: string;
   engagement_level?: string;
@@ -241,34 +380,35 @@ interface EnrichedData {
   last_activity?: string;
   predicted_interests?: string[];
   trust_score?: string;
-  confidence_score?: number;
-  sources?: Record<string, string>;
-  fields_enriched?: string[];
-  fields_not_found?: string[];
-  industry?: string;
-  location?: string;
-  bio?: string;
-  skills?: string[];
   social_profiles?: {
     linkedin?: string;
     github?: string;
     twitter?: string;
     personal_blog?: string;
   };
-  phone?: string;
-  data_source?: string;
   [key: string]: any;
 }
 
 const enrichedData = ref<EnrichedData | null>(null)
 const errorMessage = ref<string | null>(null)
 
+// Check if any social profiles are available
+const hasSocialProfiles = computed(() => {
+  if (!enrichedData.value) return false
+  return Boolean(
+    enrichedData.value.linkedin || 
+    enrichedData.value.github || 
+    enrichedData.value.twitter || 
+    enrichedData.value.personal_blog
+  )
+})
+
 // Filter out metadata fields from display
 const filteredEnrichedData = computed(() => {
   if (!enrichedData.value) return {}
   
   const filtered: Record<string, string> = {}
-  const excludeFields = ['sources', 'fields_enriched', 'fields_not_found', 'confidence_score']
+  const excludeFields = ['sources', 'fields_enriched', 'fields_not_found', 'confidence_score', 'confidence_details', 'semantic_search_used', 'original_contact', 'enrichment_timestamp', 'data_source']
   
   Object.entries(enrichedData.value).forEach(([key, value]) => {
     if (!excludeFields.includes(key) && value !== undefined && value !== null) {

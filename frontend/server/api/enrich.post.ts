@@ -35,13 +35,31 @@ interface CEAEnrichmentResponse {
     };
     phone?: string;
   };
-  confidenceScores: Record<string, number>;
+  confidenceScores: {
+    name?: number;
+    email?: number;
+    title?: number;
+    company?: number;
+    industry?: number;
+    location?: number;
+    bio?: number;
+    skills?: number;
+    socialProfiles?: {
+      linkedin?: number;
+    };
+    phone?: number;
+  };
   sources: Record<string, string>;
   enrichmentSummary: {
     fieldsEnriched: string[];
     fieldsNotFound: string[];
     overallConfidence: number;
   };
+  originalContact?: {
+    name: string;
+    email: string;
+  };
+  semanticSearchUsed?: boolean;
 }
 
 export default defineEventHandler(async (event) => {
@@ -99,29 +117,55 @@ export default defineEventHandler(async (event) => {
     }
 
     const ceaResult: CEAEnrichmentResponse = await response.json()
+    console.log("🚀 ~ defineEventHandler ~ ceaResult:", ceaResult)
     
     // Transform CEA response to match demo UI format
     const transformedData = {
+      // Basic contact information
       email: ceaResult.enrichedContact.email || body.email,
       name: ceaResult.enrichedContact.name || body.name,
       company: ceaResult.enrichedContact.company || body.company || 'Unknown',
       job_title: ceaResult.enrichedContact.title || body.jobTitle || 'Unknown',
-      industry: ceaResult.enrichedContact.industry || 'Unknown',
-      location: ceaResult.enrichedContact.location || 'Unknown',
-      bio: ceaResult.enrichedContact.bio || 'Professional profile',
+      
+      // Enhanced information from CEA
+      location: ceaResult.enrichedContact.location || 'Not found',
+      bio: ceaResult.enrichedContact.bio || 'Not available',
       skills: ceaResult.enrichedContact.skills || [],
-      social_profiles: {
-        linkedin: ceaResult.enrichedContact.socialProfiles?.linkedin || '',
-        github: ceaResult.enrichedContact.socialProfiles?.github || '',
-        twitter: ceaResult.enrichedContact.socialProfiles?.twitter || '',
-        personal_blog: ceaResult.enrichedContact.socialProfiles?.personalBlog || '',
-      },
+      
+      // Social profiles
+      linkedin: ceaResult.enrichedContact.socialProfiles?.linkedin || 'Not found',
+      github: ceaResult.enrichedContact.socialProfiles?.github || 'Not found',
+      twitter: ceaResult.enrichedContact.socialProfiles?.twitter || 'Not found',
+      personal_blog: ceaResult.enrichedContact.socialProfiles?.personalBlog || 'Not found',
+      
+      // Additional fields that might be present
+      industry: ceaResult.enrichedContact.industry || 'Not found',
       phone: ceaResult.enrichedContact.phone || 'Not found',
+      
+      // CEA-specific confidence and metadata
       confidence_score: ceaResult.enrichmentSummary.overallConfidence,
       fields_enriched: ceaResult.enrichmentSummary.fieldsEnriched,
       fields_not_found: ceaResult.enrichmentSummary.fieldsNotFound,
       sources: ceaResult.sources,
-      last_updated: new Date().toISOString(),
+      
+      // Individual confidence scores for detailed display
+      confidence_details: {
+        name: ceaResult.confidenceScores.name || 0,
+        email: ceaResult.confidenceScores.email || 0,
+        title: ceaResult.confidenceScores.title || 0,
+        company: ceaResult.confidenceScores.company || 0,
+        location: ceaResult.confidenceScores.location || 0,
+        bio: ceaResult.confidenceScores.bio || 0,
+        skills: ceaResult.confidenceScores.skills || 0,
+        linkedin: ceaResult.confidenceScores.socialProfiles?.linkedin || 0,
+        phone: ceaResult.confidenceScores.phone || 0,
+      },
+      
+      // Enrichment metadata
+      semantic_search_used: ceaResult.semanticSearchUsed || false,
+      original_contact: ceaResult.originalContact || { name: body.name, email: body.email },
+      enrichment_timestamp: new Date().toISOString(),
+      data_source: 'CEA API - Real Enrichment',
     }
 
     console.log('CEA enrichment successful:', transformedData)
