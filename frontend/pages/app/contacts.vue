@@ -97,7 +97,7 @@
         <Users class="h-12 w-12 mx-auto mb-4 opacity-50" />
         <p>No contacts found</p>
         <p class="text-sm">Try adjusting your filters or import some contacts</p>
-        <Button class="mt-4" @click="navigateTo('/import')">
+        <Button class="mt-4" @click="navigateTo('/app/import')">
           <Upload class="mr-2 h-4 w-4" />
           Import Contacts
         </Button>

@@ -232,7 +232,7 @@
         </div>
 
         <div class="flex space-x-2">
-          <Button @click="navigateTo('/contacts')">
+          <Button @click="navigateTo('/app/contacts')">
             <Users class="mr-2 h-4 w-4" />
             View Contacts
           </Button>
@@ -301,7 +301,7 @@
       :is-open="showFieldSummary"
       :field-summary="lastImportResult.fieldSummary"
       @close="showFieldSummary = false"
-      @view-contacts="navigateTo('/contacts')"
+      @view-contacts="navigateTo('/app/contacts')"
     />
   </div>
 </template>

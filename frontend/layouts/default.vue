@@ -3,7 +3,7 @@
     <!-- Sidebar -->
     <div class="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r">
       <div class="flex h-16 items-center border-b px-6">
-        <NuxtLink to="/" class="text-xl font-bold">CEA</NuxtLink>
+        <NuxtLink to="/app" class="text-xl font-bold">CEA</NuxtLink>
       </div>
       
       <nav class="flex-1 space-y-1 p-4">
@@ -121,10 +121,10 @@ const router = useRouter()
 const showUserMenu = ref(false)
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Import Contacts', href: '/import', icon: Upload },
-  { name: 'All Contacts', href: '/contacts', icon: Users },
-  { name: 'Export', href: '/export', icon: Download },
+  { name: 'Dashboard', href: '/app', icon: Home },
+  { name: 'Import Contacts', href: '/app/import', icon: Upload },
+  { name: 'All Contacts', href: '/app/contacts', icon: Users },
+  { name: 'Export', href: '/app/export', icon: Download },
 ]
 
 const pageTitle = computed(() => {

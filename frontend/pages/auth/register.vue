@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex items-center justify-center p-4">
+  <div class="flex items-center justify-center p-4 min-h-[calc(100vh-5rem)]">
     <div class="w-full max-w-md relative">
       <!-- Decorative elements -->
       <div class="absolute -top-20 -left-20 w-64 h-64 bg-blue-500/20 rounded-full filter blur-3xl"/>
@@ -8,10 +8,10 @@
       <!-- Card -->
       <div class="relative bg-gray-800/50 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-gray-700">
         <div class="text-center mb-8">
-          <NuxtLink to="/" class="inline-flex items-center space-x-2 mb-8">
+          <!-- <NuxtLink to="/" class="inline-flex items-center space-x-2 mb-8">
             <Icon name="carbon:api" class="w-8 h-8 text-blue-400" />
             <span class="text-xl font-bold">CEA</span>
-          </NuxtLink>
+          </NuxtLink> -->
           <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
             Create your account
           </h1>
@@ -103,8 +103,9 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 definePageMeta({
-  layout: false,
-  auth: false
+  layout: 'auth',
+  auth: false,
+  middleware: 'guest'
 })
 
 const { register: registerUser } = useAuth()

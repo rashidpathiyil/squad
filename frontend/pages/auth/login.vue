@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex items-center justify-center p-4">
+  <div class="flex items-center justify-center p-4 min-h-[calc(100vh-5rem)]">
     <div class="w-full max-w-md relative">
       <!-- Decorative elements -->
       <div class="absolute -top-20 -left-20 w-64 h-64 bg-blue-500/20 rounded-full filter blur-3xl"/>
@@ -83,8 +83,9 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '~/composables/useAuth'
 
 definePageMeta({
-  layout: false,
-  auth: false
+  layout: 'auth',
+  auth: false,
+  middleware: 'guest'
 })
 
 const { login } = useAuth()
@@ -106,7 +107,7 @@ const handleLogin = async () => {
 
   try {
     await login(form)
-    await router.push('/')
+    await router.push('/app')
   } catch (err: unknown) {
     error.value = err instanceof Error ? err.message : 'Login failed'
   } finally {
