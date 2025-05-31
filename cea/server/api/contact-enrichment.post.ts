@@ -58,6 +58,8 @@ interface EnrichmentResponse {
     fieldsNotFound: string[];
     overallConfidence: number;
   };
+  semanticSearchUsed?: boolean;
+  rawResponse?: string;
 }
 
 // Authentication helper functions
@@ -128,11 +130,10 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    if (!embeddingModelProviders || Object.keys(embeddingModelProviders).length === 0) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'No embedding model providers available. Please configure at least one API key (OPENAI_API_KEY or GEMINI_API_KEY)'
-      });
+    // Embedding models are now optional - warn if not available but don't block
+    const hasEmbeddingProviders = embeddingModelProviders && Object.keys(embeddingModelProviders).length > 0;
+    if (!hasEmbeddingProviders) {
+      console.warn('No embedding model providers available. Semantic search will be disabled. Consider configuring OPENAI_API_KEY or GEMINI_API_KEY for enhanced search quality.');
     }
 
     const chatModelProvider =
@@ -141,11 +142,12 @@ export default defineEventHandler(async (event) => {
       body.chatModel?.name ||
       Object.keys(chatModelProviders[chatModelProvider] || {})[0];
 
-    const embeddingModelProvider =
-      body.embeddingModel?.provider || Object.keys(embeddingModelProviders)[0];
-    const embeddingModel =
-      body.embeddingModel?.name ||
-      Object.keys(embeddingModelProviders[embeddingModelProvider] || {})[0];
+    const embeddingModelProvider = hasEmbeddingProviders
+      ? (body.embeddingModel?.provider || Object.keys(embeddingModelProviders)[0])
+      : null;
+    const embeddingModel = hasEmbeddingProviders && embeddingModelProvider
+      ? (body.embeddingModel?.name || Object.keys(embeddingModelProviders[embeddingModelProvider] || {})[0])
+      : null;
 
     // Additional validation
     if (!chatModelProviders[chatModelProvider] || !chatModel) {
@@ -155,7 +157,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    if (!embeddingModelProviders[embeddingModelProvider] || !embeddingModel) {
+    if (hasEmbeddingProviders && embeddingModelProvider && (!embeddingModelProviders[embeddingModelProvider] || !embeddingModel)) {
       throw createError({
         statusCode: 400,
         statusMessage: `Invalid embedding model provider: ${embeddingModelProvider} or model: ${embeddingModel}`
@@ -185,6 +187,9 @@ export default defineEventHandler(async (event) => {
     }
 
     if (
+      hasEmbeddingProviders &&
+      embeddingModelProvider &&
+      embeddingModel &&
       embeddingModelProviders[embeddingModelProvider] &&
       embeddingModelProviders[embeddingModelProvider][embeddingModel]
     ) {
@@ -193,10 +198,10 @@ export default defineEventHandler(async (event) => {
       ].model as Embeddings | undefined;
     }
 
-    if (!llm || !embeddings) {
+    if (!llm) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Invalid model selected'
+        statusMessage: 'Invalid chat model selected'
       });
     }
 
@@ -273,6 +278,9 @@ export default defineEventHandler(async (event) => {
               ? Math.round(confidenceValues.reduce((a, b) => a + b, 0) / confidenceValues.length)
               : 0;
 
+            // Check if semantic search was used
+            const semanticSearchUsed = embeddings !== undefined && sources.some(source => source.semanticScore !== undefined);
+
             const response: EnrichmentResponse = {
               enrichedContact: enrichmentResult.enrichedContact || body.contactInfo,
               confidenceScores: enrichmentResult.confidenceScores || {},
@@ -283,11 +291,15 @@ export default defineEventHandler(async (event) => {
                 fieldsNotFound: notFoundFields,
                 overallConfidence,
               },
+              semanticSearchUsed,
+              rawResponse: enrichmentResult.rawResponse,
             };
 
             resolve(response);
           } catch (parseError) {
             // If JSON parsing fails, return the raw message
+            const semanticSearchUsed = embeddings !== undefined && sources.some(source => source.semanticScore !== undefined);
+            
             resolve({
               enrichedContact: body.contactInfo,
               confidenceScores: {},
@@ -298,6 +310,7 @@ export default defineEventHandler(async (event) => {
                 fieldsNotFound: [],
                 overallConfidence: 0,
               },
+              semanticSearchUsed,
               rawResponse: message,
             } as any);
           }
