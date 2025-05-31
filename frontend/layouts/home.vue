@@ -10,7 +10,9 @@
         <div class="flex items-center space-x-6">
           <NuxtLink to="/documentation" class="text-gray-300 hover:text-white transition-colors">Documentation
           </NuxtLink>
-          <NuxtLink to="/auth/register" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors">Get
+          <NuxtLink to="/auth/register"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors">
+            Get
             Started</NuxtLink>
         </div>
       </div>

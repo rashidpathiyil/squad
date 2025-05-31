@@ -5,7 +5,7 @@
       <div class="text-center mb-16 space-y-6">
         <h1
           class="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-gradient pb-2">
-          Transform Your Leads into<br>Actionable Intelligence
+          Turn Raw Contacts into <br> Sales-Ready Leads
         </h1>
         <p class="text-xl text-gray-300 max-w-2xl mx-auto">
           Unlock the power of AI-driven user enrichment. Get comprehensive insights about your users in milliseconds.
