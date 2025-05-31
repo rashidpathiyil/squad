@@ -117,7 +117,6 @@ export default defineEventHandler(async (event) => {
     }
 
     const ceaResult: CEAEnrichmentResponse = await response.json()
-    console.log("🚀 ~ defineEventHandler ~ ceaResult:", ceaResult)
     
     // Transform CEA response to match demo UI format
     const transformedData = {
