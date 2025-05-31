@@ -11,11 +11,13 @@
           Unlock the power of AI-driven user enrichment. Get comprehensive insights about your users in milliseconds.
         </p>
         <div class="flex items-center justify-center space-x-4 pt-4">
-          <NuxtLink to="/auth/register"
+          <NuxtLink
+to="/auth/register"
             class="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105">
             Get Started
           </NuxtLink>
-          <NuxtLink to="/documentation"
+          <NuxtLink
+to="/documentation"
             class="px-8 py-4 bg-gray-800 hover:bg-gray-700 rounded-lg font-semibold transition-all duration-200">
             View Documentation
           </NuxtLink>
@@ -38,36 +40,43 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-300">Full Name</label>
-                <input v-model="userData.name" type="text" placeholder="John Doe"
+                <input
+v-model="userData.name" type="text" placeholder="John Doe"
                   class="w-full px-4 py-3 bg-gray-700/50 rounded-lg border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                   required>
               </div>
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-300">Email Address</label>
-                <input v-model="userData.email" type="email" placeholder="john@example.com"
+                <input
+v-model="userData.email" type="email" placeholder="john@example.com"
                   class="w-full px-4 py-3 bg-gray-700/50 rounded-lg border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                   required>
               </div>
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-300">Company</label>
-                <input v-model="userData.company" type="text" placeholder="Acme Inc"
+                <input
+v-model="userData.company" type="text" placeholder="Acme Inc"
                   class="w-full px-4 py-3 bg-gray-700/50 rounded-lg border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200">
               </div>
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-300">Job Title</label>
-                <input v-model="userData.jobTitle" type="text" placeholder="Software Engineer"
+                <input
+v-model="userData.jobTitle" type="text" placeholder="Software Engineer"
                   class="w-full px-4 py-3 bg-gray-700/50 rounded-lg border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200">
               </div>
             </div>
 
-            <button type="submit" :disabled="loading"
+            <button
+type="submit" :disabled="loading"
               class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold py-4 px-6 rounded-lg transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50">
               <span v-if="!loading">Enrich Data</span>
               <span v-else class="flex items-center justify-center">
                 <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+                  <circle
+class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
                     fill="none" />
-                  <path class="opacity-75" fill="currentColor"
+                  <path
+class="opacity-75" fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
                 Processing...
@@ -76,7 +85,8 @@
           </form>
 
           <!-- Results Section -->
-          <Transition enter-active-class="transition duration-300 ease-out"
+          <Transition
+enter-active-class="transition duration-300 ease-out"
             enter-from-class="transform -translate-y-4 opacity-0" enter-to-class="transform translate-y-0 opacity-100"
             leave-active-class="transition duration-200 ease-in" leave-from-class="transform translate-y-0 opacity-100"
             leave-to-class="transform -translate-y-4 opacity-0">
@@ -91,7 +101,8 @@
                   </div>
                   <div v-if="enrichedData.confidence_score" class="flex items-center space-x-2">
                     <span class="text-sm text-gray-400">Overall Confidence:</span>
-                    <span class="px-3 py-1 rounded-full text-sm font-medium"
+                    <span
+class="px-3 py-1 rounded-full text-sm font-medium"
                       :class="getConfidenceColor(enrichedData.confidence_score)">
                       {{ enrichedData.confidence_score }}%
                     </span>
@@ -108,12 +119,14 @@
                     Contact Details
                   </h4>
                   <div class="space-y-3">
-                    <div v-for="field in ['name', 'email', 'job_title', 'company', 'location', 'phone']" :key="field"
+                    <div
+v-for="field in ['name', 'email', 'job_title', 'company', 'location', 'phone']" :key="field"
                       class="flex justify-between items-center">
                       <span class="text-gray-400 text-sm">{{ formatKey(field) }}:</span>
                       <div class="flex items-center space-x-2">
                         <span class="text-white text-sm">{{ enrichedData[field] || 'Not found' }}</span>
-                        <span v-if="enrichedData.confidence_details?.[field]" class="px-2 py-1 rounded text-xs"
+                        <span
+v-if="enrichedData.confidence_details?.[field]" class="px-2 py-1 rounded text-xs"
                           :class="getConfidenceColor(enrichedData.confidence_details[field])">
                           {{ enrichedData.confidence_details[field] }}%
                         </span>
@@ -132,7 +145,8 @@
                     <div>
                       <span class="text-gray-400 text-sm">Bio:</span>
                       <p class="text-white text-sm mt-1">{{ enrichedData.bio || 'Not available' }}</p>
-                      <span v-if="enrichedData.confidence_details?.bio"
+                      <span
+v-if="enrichedData.confidence_details?.bio"
                         class="inline-block mt-1 px-2 py-1 rounded text-xs"
                         :class="getConfidenceColor(enrichedData.confidence_details.bio)">
                         {{ enrichedData.confidence_details.bio }}% confidence
@@ -141,12 +155,14 @@
                     <div v-if="enrichedData.skills && enrichedData.skills.length > 0">
                       <span class="text-gray-400 text-sm">Skills:</span>
                       <div class="flex flex-wrap gap-2 mt-2">
-                        <span v-for="skill in enrichedData.skills" :key="skill"
+                        <span
+v-for="skill in enrichedData.skills" :key="skill"
                           class="px-2 py-1 bg-blue-600/20 text-blue-300 rounded text-xs">
                           {{ skill }}
                         </span>
                       </div>
-                      <span v-if="enrichedData.confidence_details?.skills"
+                      <span
+v-if="enrichedData.confidence_details?.skills"
                         class="inline-block mt-1 px-2 py-1 rounded text-xs"
                         :class="getConfidenceColor(enrichedData.confidence_details.skills)">
                         {{ enrichedData.confidence_details.skills }}% confidence
@@ -163,17 +179,20 @@
                   Social Profiles
                 </h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div v-for="platform in ['linkedin', 'github', 'twitter', 'personal_blog']" :key="platform"
+                  <div
+v-for="platform in ['linkedin', 'github', 'twitter', 'personal_blog']" :key="platform"
                     class="flex justify-between items-center">
                     <span class="text-gray-400 text-sm capitalize">{{ formatKey(platform) }}:</span>
                     <div class="flex items-center space-x-2">
-                      <a v-if="enrichedData[platform] && enrichedData[platform] !== 'Not found'"
+                      <a
+v-if="enrichedData[platform] && enrichedData[platform] !== 'Not found'"
                         :href="enrichedData[platform]" target="_blank"
                         class="text-blue-400 hover:text-blue-300 text-sm truncate max-w-48">
                         {{ enrichedData[platform] }}
                       </a>
                       <span v-else class="text-gray-500 text-sm">Not found</span>
-                      <span v-if="platform === 'linkedin' && enrichedData.confidence_details?.linkedin"
+                      <span
+v-if="platform === 'linkedin' && enrichedData.confidence_details?.linkedin"
                         class="px-2 py-1 rounded text-xs"
                         :class="getConfidenceColor(enrichedData.confidence_details.linkedin)">
                         {{ enrichedData.confidence_details.linkedin }}%
@@ -190,7 +209,8 @@
                   Data Sources
                 </h4>
                 <div class="flex flex-wrap gap-2">
-                  <div v-for="(source, field) in enrichedData.sources" :key="field"
+                  <div
+v-for="(source, field) in enrichedData.sources" :key="field"
                     class="px-3 py-2 bg-blue-600/20 text-blue-300 rounded-lg text-xs">
                     <span class="font-medium">{{ formatKey(String(field)) }}:</span>
                     <span class="ml-1">{{ source }}</span>
@@ -207,7 +227,8 @@
                     Successfully Enriched ({{ enrichedData.fields_enriched.length }})
                   </h4>
                   <div class="flex flex-wrap gap-2">
-                    <span v-for="field in enrichedData.fields_enriched" :key="field"
+                    <span
+v-for="field in enrichedData.fields_enriched" :key="field"
                       class="px-3 py-1 bg-green-600/20 text-green-300 rounded-full text-xs">
                       {{ formatKey(field) }}
                     </span>
@@ -221,7 +242,8 @@
                     Not Found ({{ enrichedData.fields_not_found.length }})
                   </h4>
                   <div class="flex flex-wrap gap-2">
-                    <span v-for="field in enrichedData.fields_not_found" :key="field"
+                    <span
+v-for="field in enrichedData.fields_not_found" :key="field"
                       class="px-3 py-1 bg-orange-600/20 text-orange-300 rounded-full text-xs">
                       {{ formatKey(field) }}
                     </span>
@@ -242,7 +264,8 @@
           </Transition>
 
           <!-- Error Message -->
-          <Transition enter-active-class="transition duration-300 ease-out"
+          <Transition
+enter-active-class="transition duration-300 ease-out"
             enter-from-class="transform -translate-y-4 opacity-0" enter-to-class="transform translate-y-0 opacity-100"
             leave-active-class="transition duration-200 ease-in" leave-from-class="transform translate-y-0 opacity-100"
             leave-to-class="transform -translate-y-4 opacity-0">
@@ -265,7 +288,8 @@
 
       <!-- Features Section -->
       <div class="mt-32 grid md:grid-cols-3 gap-8">
-        <div v-for="feature in features" :key="feature.title"
+        <div
+v-for="feature in features" :key="feature.title"
           class="group p-6 bg-gray-800/30 rounded-xl border border-gray-700 transform hover:scale-105 transition-all duration-300">
           <div class="text-blue-400 text-3xl mb-4 group-hover:scale-110 transition-transform duration-300">
             <Icon :name="feature.icon" />
@@ -275,7 +299,7 @@
         </div>
       </div>
       <!-- faq section -->
-      <div class="w-full mt-32">
+      <!-- <div class="w-full mt-32">
         <h2 class="text-3xl md:text-4xl font-bold pb-2  text-white">
           Why LeadUp?
         </h2>
@@ -283,7 +307,7 @@
           <AccordionDemo />
         </div>
 
-      </div>
+      </div> -->
 
       <!-- Stats Section -->
       <div class="mt-32 text-center">
@@ -303,11 +327,13 @@
           <h2 class="text-3xl md:text-4xl font-bold mb-4 ">Ready to Get Started ?</h2>
           <p class="text-xl text-gray-200 mb-8">Transform your user data into actionable insights today.</p>
           <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-6">
-            <NuxtLink to="/auth/register"
+            <NuxtLink
+to="/auth/register"
               class="px-8 py-4 bg-white text-gray-900 rounded-lg font-semibold  transition-colors">
               Get Started
             </NuxtLink>
-            <NuxtLink to="/documentation"
+            <NuxtLink
+to="/documentation"
               class="px-8 py-4 bg-transparent border-2 border-white rounded-lg font-semibold  transition-colors">
               View Documentation
             </NuxtLink>
@@ -320,8 +346,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import AccordionDemo from '~/components/ui/accordion/index.vue'
-import { AccordionContent, AccordionHeader, AccordionItem, AccordionRoot, AccordionTrigger } from 'reka-ui'
+// import AccordionDemo from '~/components/ui/accordion/index.vue'
+// import { AccordionContent, AccordionHeader, AccordionItem, AccordionRoot, AccordionTrigger } from 'reka-ui'
 
 definePageMeta({
   layout: 'home',
