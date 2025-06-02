@@ -95,7 +95,16 @@ export default defineEventHandler(async (event) => {
         company: body.company,
         title: body.jobTitle,
       },
-      optimizationMode: 'balanced'
+      chatModel: {
+        provider: 'anthropic',
+        name: 'claude-3-haiku-20240307',
+      },
+      embeddingModel: {
+        provider: 'openai',
+        name: 'text-embedding-3-large',
+      },
+      optimizationMode: 'balanced',
+      systemInstructions: 'You are a helpful assistant that enriches contact information.'
     }
 
     console.log('Calling CEA API:', `${ceaApiUrl}/api/contact-enrichment`)
