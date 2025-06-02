@@ -233,8 +233,20 @@ ${index + 1}. Title: ${result.title}
 ### System Instructions:
 ${systemInstructions || 'Only return enriched data that confidently matches the provided input. Do not guess or fabricate information. If information is ambiguous or inconsistent, reflect that in the confidence scores and consider excluding the field entirely.'}
 
-### Output Format:
-Please return a JSON object with the following structure:
+### IMPORTANT: Response Format Instructions
+**YOU MUST RESPOND WITH ONLY THE JSON OBJECT. DO NOT INCLUDE ANY EXPLANATION, INTRODUCTION, OR CONCLUSION TEXT.**
+
+**DO NOT START WITH PHRASES LIKE:**
+- "Based on the provided information..."
+- "Here is the enriched contact data..."
+- "The following JSON object..."
+
+**DO NOT END WITH EXPLANATIONS OR DESCRIPTIONS**
+
+**RESPOND WITH VALID JSON ONLY - START WITH { AND END WITH }**
+
+Return exactly this JSON structure with no additional text:
+
 {
   "enrichedContact": {
     "name": "string",
@@ -279,15 +291,14 @@ Please return a JSON object with the following structure:
   }
 }
 
-### Notes:
-- Only include fields where you have **reasonable confidence** based on the **actual search results**.
-- Confidence scores must range from **0 to 100**, reflecting your certainty about the accuracy of each field.
-- If search results do not contain relevant or verifiable information for a field, **do not include it**.
-- Never guess or fabricate information.
-- Include **source URLs** for each enriched field to provide traceability.
-- If there are multiple people with similar names or emails, use disambiguating signals such as location, job title, company, or profile URLs.
-- Always prioritize **accuracy over completeness**. It's better to return fewer fields with high confidence than many with low reliability.
-`;
+### Final Requirements:
+- **RESPOND WITH ONLY VALID JSON - NO EXPLANATORY TEXT**
+- Only include fields where you have **reasonable confidence** based on the **actual search results**
+- Confidence scores must range from **0 to 100**
+- If search results do not contain relevant information for a field, **do not include it**
+- Never guess or fabricate information
+- Include **source URLs** for each enriched field
+- Always prioritize **accuracy over completeness**`;
 
       // Simulate API call delay
       setTimeout(async () => {

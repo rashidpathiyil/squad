@@ -3,11 +3,12 @@
     <!-- Sidebar -->
     <div class="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r">
       <div class="flex h-16 items-center border-b px-6">
-        <NuxtLink to="/app" class="text-xl font-bold">LeadUp</NuxtLink>
+        <NuxtLink to="/" class="text-xl font-bold">LeadUp</NuxtLink>
       </div>
 
       <nav class="flex-1 space-y-1 p-4">
-        <NuxtLink v-for="item in navigation" :key="item.name" :to="item.href" :class="[
+        <NuxtLink
+v-for="item in navigation" :key="item.name" :to="item.href" :class="[
           'flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors',
           $route.path === item.href
             ? 'bg-primary text-primary-foreground'

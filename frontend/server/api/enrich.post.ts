@@ -77,11 +77,13 @@ export default defineEventHandler(async (event) => {
   // Get CEA API configuration from environment variables
   const ceaApiUrl = runtimeConfig.ceaApiUrl || 'http://localhost:3001'
   const ceaApiKey = runtimeConfig.ceaApiKey
+  console.log("🚀 ~ defineEventHandler ~ ceaApiKey:", ceaApiKey)
   
   if (!ceaApiKey) {
-    console.warn('CEA_API_KEY not configured, falling back to mock data')
-    // Return mock data if CEA API is not configured
-    return getMockEnrichmentData(body)
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'CEA_API_KEY not configured',
+    })
   }
 
   try {
@@ -110,10 +112,10 @@ export default defineEventHandler(async (event) => {
 
     if (!response.ok) {
       console.error('CEA API error:', response.status, response.statusText)
-      
-      // Fall back to mock data if CEA API fails
-      console.warn('Falling back to mock data due to CEA API error')
-      return getMockEnrichmentData(body)
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'CEA API error: ' + response.statusText,
+      })
     }
 
     const ceaResult: CEAEnrichmentResponse = await response.json()
@@ -172,44 +174,9 @@ export default defineEventHandler(async (event) => {
 
   } catch (error) {
     console.error('Error calling CEA API:', error)
-    
-    // Fall back to mock data if there's an error
-    console.warn('Falling back to mock data due to error:', error)
-    return getMockEnrichmentData(body)
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Error calling CEA API',
+    })
   }
 })
-
-// Mock data function for fallback
-function getMockEnrichmentData(body: UserInput) {
-  console.log('Using mock enrichment data for:', body.email)
-  
-  return {
-    email: body.email,
-    name: body.name,
-    company: body.company || 'Unknown',
-    job_title: body.jobTitle || 'Unknown',
-    magic_score: Math.floor(Math.random() * 100),
-    user_status: ['Active', 'Power User', 'Early Adopter'][Math.floor(Math.random() * 3)],
-    engagement_level: ['High', 'Medium', 'Very High'][Math.floor(Math.random() * 3)],
-    surprise_factor: [
-      'Early Technology Adopter',
-      'Industry Influencer',
-      'Growth Leader',
-      'Innovation Champion'
-    ][Math.floor(Math.random() * 4)],
-    last_activity: new Date().toISOString(),
-    predicted_interests: [
-      'Artificial Intelligence',
-      'Data Science',
-      'Cloud Computing',
-      'Digital Transformation',
-      'Machine Learning'
-    ].slice(0, Math.floor(Math.random() * 3) + 2),
-    trust_score: (Math.random() * 10).toFixed(1),
-    industry_presence: ['Growing', 'Established', 'Leading'][Math.floor(Math.random() * 3)],
-    growth_potential: Math.floor(Math.random() * 100),
-    market_influence: ['Regional', 'National', 'Global'][Math.floor(Math.random() * 3)],
-    data_source: 'Mock API (CEA not configured)',
-    confidence_score: 75,
-  }
-} 

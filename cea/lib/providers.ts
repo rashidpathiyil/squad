@@ -3,7 +3,7 @@ import type { Embeddings } from '@langchain/core/embeddings';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
 import { ChatGroq } from '@langchain/groq';
-import { ChatOllama } from '@langchain/ollama';
+import { ChatOllama, OllamaEmbeddings } from '@langchain/ollama';
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import {
   getAnthropicApiKey,
@@ -15,18 +15,24 @@ import {
   getOpenAIApiKey
 } from './config';
 
-interface ModelProvider {
+interface ChatModelProvider {
   [key: string]: {
-    model: BaseChatModel | Embeddings;
+    model: BaseChatModel;
+  };
+}
+
+interface EmbeddingModelProvider {
+  [key: string]: {
+    model: Embeddings;
   };
 }
 
 interface ModelProviders {
-  [key: string]: ModelProvider;
+  [key: string]: ChatModelProvider | EmbeddingModelProvider;
 }
 
-export const getAvailableChatModelProviders = async (): Promise<ModelProviders> => {
-  const providers: ModelProviders = {};
+export const getAvailableChatModelProviders = async (): Promise<Record<string, Record<string, { model: any }>>> => {
+  const providers: Record<string, Record<string, { model: any }>> = {};
 
   // OpenAI
   const openaiKey = getOpenAIApiKey();
@@ -142,7 +148,9 @@ export const getAvailableChatModelProviders = async (): Promise<ModelProviders> 
 
   // OLLAMA
   const ollamaUrl = getOllamaApiUrl();
+  console.log('Debug: Checking Ollama URL for embeddings:', ollamaUrl);
   if (ollamaUrl) {
+    console.log('Debug: Adding Ollama embedding providers');
     providers.ollama = {
       'llama3:8b': {
         model: new ChatOllama({
@@ -166,6 +174,9 @@ export const getAvailableChatModelProviders = async (): Promise<ModelProviders> 
         }),
       },
     };
+    console.log('Ollama embeddings are now available!');
+  } else {
+    console.log('Debug: No Ollama URL found, skipping Ollama embeddings');
   }
 
   // DeepSeek (using OpenAI-compatible endpoint)
@@ -202,11 +213,12 @@ export const getAvailableChatModelProviders = async (): Promise<ModelProviders> 
     };
   }
 
+  console.log('Debug: Available embedding providers:', Object.keys(providers));
   return providers;
 };
 
-export const getAvailableEmbeddingModelProviders = async (): Promise<ModelProviders> => {
-  const providers: ModelProviders = {};
+export const getAvailableEmbeddingModelProviders = async (): Promise<Record<string, Record<string, { model: any }>>> => {
+  const providers: Record<string, Record<string, { model: any }>> = {};
 
   // OpenAI Embeddings
   const openaiKey = getOpenAIApiKey();
@@ -246,13 +258,36 @@ export const getAvailableEmbeddingModelProviders = async (): Promise<ModelProvid
     };
   }
 
-  // OLLAMA Embeddings
+  // OLLAMA Embeddings - NOW SUPPORTED!
   const ollamaUrl = getOllamaApiUrl();
+  console.log('Debug: Checking Ollama URL for embeddings:', ollamaUrl);
   if (ollamaUrl) {
-    // Note: OllamaEmbeddings import is currently not available in @langchain/ollama v0.0.3
-    // Consider upgrading to a newer version or using alternative embedding providers
-    console.warn('Ollama embeddings are not available in the current @langchain/ollama version');
+    console.log('Debug: Adding Ollama embedding providers');
+    providers.ollama = {
+      'mxbai-embed-large': {
+        model: new OllamaEmbeddings({
+          model: 'mxbai-embed-large',
+          baseUrl: ollamaUrl,
+        }),
+      },
+      'nomic-embed-text': {
+        model: new OllamaEmbeddings({
+          model: 'nomic-embed-text',
+          baseUrl: ollamaUrl,
+        }),
+      },
+      'all-minilm': {
+        model: new OllamaEmbeddings({
+          model: 'all-minilm',
+          baseUrl: ollamaUrl,
+        }),
+      },
+    };
+    console.log('Ollama embeddings are now available!');
+  } else {
+    console.log('Debug: No Ollama URL found, skipping Ollama embeddings');
   }
 
+  console.log('Debug: Available embedding providers:', Object.keys(providers));
   return providers;
 }; 

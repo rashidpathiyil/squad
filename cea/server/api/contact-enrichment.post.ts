@@ -137,13 +137,40 @@ export default defineEventHandler(async (event) => {
     }
 
     const chatModelProvider =
-      body.chatModel?.provider || Object.keys(chatModelProviders)[0];
+      body.chatModel?.provider || (() => {
+        // Prioritize providers based on what's actually available
+        const availableProviders = Object.keys(chatModelProviders);
+        
+        // Check if we have Anthropic available (since user has the API key)
+        if (availableProviders.includes('anthropic')) {
+          return 'anthropic';
+        }
+        
+        // Check if we have Ollama available (local, no API key needed)
+        if (availableProviders.includes('ollama')) {
+          return 'ollama';
+        }
+        
+        // Fallback to first available provider
+        return availableProviders[0];
+      })();
     const chatModel =
       body.chatModel?.name ||
       Object.keys(chatModelProviders[chatModelProvider] || {})[0];
 
     const embeddingModelProvider = hasEmbeddingProviders
-      ? (body.embeddingModel?.provider || Object.keys(embeddingModelProviders)[0])
+      ? (body.embeddingModel?.provider || (() => {
+          // Prioritize providers based on what's actually available
+          const availableProviders = Object.keys(embeddingModelProviders);
+          
+          // Check if we have Ollama available (local, no API key needed)
+          if (availableProviders.includes('ollama')) {
+            return 'ollama';
+          }
+          
+          // Fallback to first available provider
+          return availableProviders[0];
+        })())
       : null;
     const embeddingModel = hasEmbeddingProviders && embeddingModelProvider
       ? (body.embeddingModel?.name || Object.keys(embeddingModelProviders[embeddingModelProvider] || {})[0])
@@ -251,7 +278,56 @@ export default defineEventHandler(async (event) => {
         emitter.on('end', () => {
           try {
             // Parse the JSON response from the AI
-            const enrichmentResult = JSON.parse(message);
+            // For some LLMs (like Anthropic), the response may contain explanation text
+            // before and after the JSON. We need to extract just the JSON part.
+            let enrichmentResult;
+            
+            try {
+              // First, try to parse the message as-is (works for most LLMs)
+              enrichmentResult = JSON.parse(message);
+            } catch (firstParseError) {
+              // If that fails, try to extract JSON from the response
+              // Look for JSON block that starts with { and includes enrichedContact
+              const lines = message.split('\n');
+              let jsonStart = -1;
+              let jsonEnd = -1;
+              let braceCount = 0;
+              
+              for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line.startsWith('{') && jsonStart === -1) {
+                  jsonStart = i;
+                  braceCount = 1;
+                } else if (jsonStart !== -1) {
+                  for (const char of line) {
+                    if (char === '{') braceCount++;
+                    if (char === '}') braceCount--;
+                    if (braceCount === 0) {
+                      jsonEnd = i;
+                      break;
+                    }
+                  }
+                  if (braceCount === 0) break;
+                }
+              }
+              
+              if (jsonStart !== -1 && jsonEnd !== -1) {
+                const jsonLines = lines.slice(jsonStart, jsonEnd + 1);
+                const jsonText = jsonLines.join('\n');
+                console.log('Extracted JSON text:', jsonText.substring(0, 500));
+                enrichmentResult = JSON.parse(jsonText);
+                console.log('Parsed enrichmentResult keys:', Object.keys(enrichmentResult));
+              } else {
+                // Fallback: try simple regex extraction
+                const jsonMatch = message.match(/\{[\s\S]*?\n\}/);
+                if (jsonMatch) {
+                  console.log('Regex extracted JSON:', jsonMatch[0].substring(0, 500));
+                  enrichmentResult = JSON.parse(jsonMatch[0]);
+                } else {
+                  throw firstParseError;
+                }
+              }
+            }
             
             // Calculate enrichment summary
             const originalFields = Object.keys(body.contactInfo).filter(
